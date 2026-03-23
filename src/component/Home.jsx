@@ -69,7 +69,7 @@ const Home = () => {
   const fetchProductDetails = async (productName) => {
     try {
       const encodedName = encodeURIComponent(productName);
-      const response = await fetch(`http://localhost:5000/api/export-premium-cashews?name=${encodedName}`);
+      const response = await fetch(`https://red-clay-backend.onrender.com/api/export-premium-cashews?name=${encodedName}`);
       const data = await response.json();
       
       if (data.success && data.data && data.data.length > 0) {
@@ -248,7 +248,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/premium-cashews");
+        const res = await fetch("https://red-clay-backend.onrender.com/api/premium-cashews");
         const data = await res.json();
 
         if (data.success) {
