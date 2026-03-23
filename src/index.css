@@ -1,0 +1,84 @@
+.text-block {
+  display: inline-block;
+  background: linear-gradient(90deg, #a7f3fa 60%, #a7f3d0 100%);
+  color: #134e4a;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.04);
+  transition: background 0.3s, color 0.3s;
+}
+.text-block:hover {
+  background: linear-gradient(90deg, #6ee7b7 60%, #38bdf8 100%);
+  color: #0e7490;
+}
+.navbar-dryfruits-bg {
+  /* Dryfruits emoji pattern background */
+  background-image: repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0) 0 40px,
+      rgba(0, 0, 0, 0) 0 80px
+    ),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><text x="0" y="28" font-size="28">🍎🥭🍍🍌🍓🍊🥝🍇</text></svg>');
+  background-repeat: repeat;
+  background-size: 240px 40px;
+  background-position: center;
+  opacity: 1;
+}
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient-bg {
+  background-size: 600% 600%;
+  animation: gradientMove 12s ease-in-out infinite;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for the modal */
+.modal-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 10px 10px 0;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: #2e8b57;
+  border-radius: 4px;
+}
+
+.modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #1a6b3a;
+}
+
+/* Custom scrollbar styling */
+.no-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
