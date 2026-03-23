@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Base URL for your backend - SIMPLIFIED VERSION
-  const API_BASE_URL = "http://localhost:5000"; // Directly set to your backend URL
+  const API_BASE_URL = "https://red-clay-backend.onrender.com"; // Directly set to your backend URL
 
   // Admin configuration — store numbers as 10-digit strings (no country code)
   const ADMIN_PHONES = ["8754201900"]; // Add admin phone numbers (10-digit format)
