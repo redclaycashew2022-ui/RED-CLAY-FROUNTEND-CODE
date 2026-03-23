@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import SaltedCashewImage from "../wwimages/SaltedCashew.png";
+import SaltedCashewImage from "../wwimages/saltedcashew.png";
 import { useCart } from "../context/CartContext";
 import {
   FaHeart,
