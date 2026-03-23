@@ -14,7 +14,8 @@ import LWP from "../wwimages/LWP.png";
 import SP from "../wwimages/SP.png";
 import BB from "../wwimages/BB.png";
 import Roasted from "../wwimages/Roasted.png";
-import saltedcashew from "../wwimages/SaltedCashew.png";
+// ✅ Match exact filename on disk (all lowercase)
+import saltedcashew from "../wwimages/saltedcashew.png";
 import BormaCashewwithSkin from "../wwimages/BormaCashewwithSkin.png";
 import GreenChili from "../wwimages/GreenChili.png";
 import BlockPepperSalted from "../wwimages/BlockPepperSalted.png";
