@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GreenChiliCashewImage from "../wwimages/GreenChili.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api"; 
 import {
   FaHeart,
   FaFire,
@@ -25,12 +26,7 @@ const GreenChiliDetails = ({ onClose }) => {
     image: GreenChiliCashewImage,
     category: "Spicy Flavored",
     description: "Fiery green chili seasoned skin-on cashews",
-    basePrice: 720,
-    sizes: [
-      { id: "size-250", label: "250g", multiplier: 1 },
-      { id: "size-500", label: "500g", multiplier: 2 },
-      { id: "size-1kg", label: "1kg", multiplier: 4 },
-    ],
+     sizes: [],
     stock: 65,
     rating: 4.8,
   };
@@ -39,10 +35,10 @@ const GreenChiliDetails = ({ onClose }) => {
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [activeTab, setActiveTab] = useState("description");
   const { addToCart } = useCart();
-
-  const selectedSize =
-    product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0];
+const selectedSize =
+  product.sizes.find((size) => size.id === selectedSizeId) ||
+  product.sizes[0] ||
+  { id: "", label: "", price: 0 }; // ✅ prevents crash
 
   useEffect(() => {
     if (product?.sizes?.length > 0 && !selectedSizeId) {
@@ -50,27 +46,64 @@ const GreenChiliDetails = ({ onClose }) => {
     }
   }, [product, selectedSizeId]);
 
-  const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
+ useEffect(() => {
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+      const data = await response.json();
 
-    addToCart(cartItem);
+      if (data.success && Array.isArray(data.data)) {
+        const found = data.data.find(
+          (p) =>
+            p.name.trim().toLowerCase() ===
+            product.name.trim().toLowerCase()
+        );
 
-    const notify = document.getElementById("cart-notification");
-    notify.classList.remove("hidden");
-    setTimeout(() => {
-      notify.classList.add("hidden");
-    }, 2000);
+        if (found) {
+          setProduct((prev) => ({
+            ...prev,
+            sizes: found.sizes.map((s) => ({
+              id: s.id,
+              label: s.size,
+              price: s.price,
+            })),
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch product:", err);
+    }
   };
+
+  fetchProduct();
+}, []);
+
+  const handleAddToCart = () => {
+  if (!selectedSize || !selectedSize.id) {
+    alert("Please select a size before adding to cart");
+    return;
+  }
+  const cartItem = {
+    id: selectedSize.id,
+    name: `${product.name} - ${selectedSize.label}`,
+    image: product.image,
+    price: Number(selectedSize.price),
+    size: selectedSize.label,
+    quantity: quantity,
+  };
+  addToCart(cartItem);
+  const notify = document.getElementById("cart-notification");
+  if (notify) {
+    notify.classList.remove("hidden");
+    setTimeout(() => notify.classList.add("hidden"), 2000);
+  }
+};
+
+// ✅ ADD handleBuyNow (was missing)
+const handleBuyNow = () => {
+  onClose();
+  navigate(`/products/${product.id}`);
+};
 
   const tabContent = {
     description: (
@@ -261,35 +294,38 @@ const GreenChiliDetails = ({ onClose }) => {
               />
 
               {/* Price */}
-              <div className="mt-4 bg-green-600/10 p-3 rounded-lg">
-                <span className="font-semibold">Price:</span>{" "}
-                <span className="text-green-600 font-bold text-lg">
-                  ₹{product.basePrice * selectedSize.multiplier} /{" "}
-                  {selectedSize.label}
-                </span>
-              </div>
-
-              {/* Sizes */}
+              <div className="mt-4 bg-[#8B4513]/10 p-3 rounded-lg">
+  <span className="font-semibold">Price:</span>{" "}
+  <span className="text-[#8B4513] font-bold text-lg">
+    {selectedSize.price
+      ? `₹${selectedSize.price} / ${selectedSize.label}`
+      : "Loading..."}
+  </span>
+</div>
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-3">Select Size:</h3>
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                  {product.sizes.map((size) => (
-                    <motion.button
-                      key={size.id}
-                      onClick={() => setSelectedSizeId(size.id)}
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
-                        selectedSizeId === size.id
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {size.label} (₹{product.basePrice * size.multiplier})
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+  <h3 className="text-lg font-semibold mb-3">Select Size:</h3>
+  {product.sizes.length > 0 ? (
+    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+      {product.sizes.map((size) => (
+        <motion.button
+          key={size.id}
+          onClick={() => setSelectedSizeId(size.id)}
+          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
+            selectedSizeId === size.id
+              ? "bg-[#8B4513] text-white"
+              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {size.label} (₹{size.price})
+        </motion.button>
+      ))}
+    </div>
+  ) : (
+    <div className="text-gray-400 text-sm">Loading sizes...</div>
+  )}
+</div>
 
               {/* Quantity */}
               <div className="mt-6">
@@ -364,18 +400,12 @@ const GreenChiliDetails = ({ onClose }) => {
                   Total:
                 </span>
                 <div className="text-right">
-                  <p className="text-lg sm:text-xl font-bold text-green-600">
-                    ₹
-                    {(
-                      product.basePrice *
-                      selectedSize.multiplier *
-                      quantity
-                    ).toFixed(2)}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {quantity} × {selectedSize.label} @ ₹
-                    {product.basePrice * selectedSize.multiplier}
-                  </p>
+               <p className="text-lg sm:text-xl font-bold text-[#8B4513]">
+  ₹{(Number(selectedSize.price || 0) * quantity).toFixed(2)}
+</p>
+<p className="text-xs sm:text-sm text-gray-500">
+  {quantity} × {selectedSize.label || "-"} @ ₹{selectedSize.price || 0}
+</p>
                 </div>
               </div>
             </div>

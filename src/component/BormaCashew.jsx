@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import BormaCashewwithSkin from "../wwimages/BormaCashewwithSkin.png";
 import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom"; // 👈 ADD THIS
+import { API_BASE_URL } from "../services/api";
 import {
   FaHeart,
   FaFire,
@@ -18,30 +20,52 @@ import {
 
 const BormaCashew = ({ onClose }) => {
    const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const product = {
-    id: 9,
-    name: "Borma Cashew with Skin",
-    image: BormaCashewwithSkin,
-    category: "Natural & Rustic",
-    description: "Authentic cashews with skin for earthy flavor",
-    basePrice: 680,
-    sizes: [
-      { id: "size-250", label: "250g", multiplier: 1 },
-      { id: "size-500", label: "500g", multiplier: 2 },
-      { id: "size-1kg", label: "1kg", multiplier: 4 },
-    ],
-    stock: 75,
-    rating: 4.6,
-  };
+   const navigate = useNavigate();
 
+const [product, setProduct] = useState({
+  id: 9,
+  name: "Borma Cashew with Skin", 
+  image: BormaCashewwithSkin,
+  category: "Natural & Rustic",
+  description: "Authentic cashews with skin for earthy flavor",
+  sizes: [],
+  stock: 75,
+  rating: 4.6,
+});
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [activeTab, setActiveTab] = useState("description");
   const { addToCart } = useCart();
 
   const selectedSize =
-    product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0];
+  product.sizes.find((size) => size.id === selectedSizeId) ||
+  product.sizes[0] ||
+  { id: "", label: "", price: 0 }; 
+
+    useEffect(() => {
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        const found = data.data.find(p => p.name === product.name);
+        if (found) {
+          setProduct(prev => ({
+            ...prev,
+            sizes: found.sizes.map((s) => ({
+              id: s.id,
+              label: s.size,
+              price: s.price,
+            })),
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch Borma product:", err);
+    }
+  };
+  fetchProduct();
+}, []);
 
   useEffect(() => {
     if (product?.sizes?.length > 0 && !selectedSizeId) {
@@ -50,27 +74,48 @@ const BormaCashew = ({ onClose }) => {
   }, [product, selectedSizeId]);
 
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
-
-    addToCart(cartItem);
-
-    const notify = document.getElementById("cart-notification");
-    notify.classList.remove("hidden");
-    setTimeout(() => {
-      notify.classList.add("hidden");
-    }, 2000);
+  const cartItem = {
+    id: selectedSizeId,          
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    price: Number(selectedSize.price),  
+    size: selectedSize.label,
+    quantity: quantity,
+    description: product.description,
+    stock: product.stock,
   };
 
+  addToCart(cartItem);
+  document.getElementById("cart-notification").classList.remove("hidden");
+  setTimeout(() => {
+    document.getElementById("cart-notification").classList.add("hidden");
+  }, 2000);
+};
+
+const handleBuyNow = () => {
+  onClose();
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+
+    
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
+};
   // Tabs data
   const tabContent = {
     description: (
@@ -198,7 +243,7 @@ const BormaCashew = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -212,7 +257,7 @@ const BormaCashew = ({ onClose }) => {
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
+         className="hidden fixed top-1 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-[100]"
         initial={{ scale: 0.9, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
@@ -253,34 +298,39 @@ const BormaCashew = ({ onClose }) => {
 
               {/* Price */}
               <div className="mt-4 bg-[#8B4513]/10 p-3 rounded-lg">
-                <span className="font-semibold">Price:</span>{" "}
-                <span className="text-[#8B4513] font-bold text-lg">
-                  ₹{product.basePrice * selectedSize.multiplier} /{" "}
-                  {selectedSize.label}
-                </span>
-              </div>
+  <span className="font-semibold">Price:</span>{" "}
+  <span className="text-[#8B4513] font-bold text-lg">
+    {selectedSize.price
+      ? `₹${selectedSize.price} / ${selectedSize.label}`
+      : "Loading..."}
+  </span>
+</div>
 
               {/* Sizes */}
               <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-3">Select Size:</h3>
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                  {product.sizes.map((size) => (
-                    <motion.button
-                      key={size.id}
-                      onClick={() => setSelectedSizeId(size.id)}
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
-                        selectedSizeId === size.id
-                          ? "bg-[#8B4513] text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {size.label} (₹{product.basePrice * size.multiplier})
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+  <h3 className="text-lg font-semibold mb-3">Select Size:</h3>
+  {product.sizes.length > 0 ? (
+    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+      {product.sizes.map((size) => (
+        <motion.button
+          key={size.id}
+          onClick={() => setSelectedSizeId(size.id)}
+          className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
+            selectedSizeId === size.id
+              ? "bg-[#8B4513] text-white"
+              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {size.label} (₹{size.price})
+        </motion.button>
+      ))}
+    </div>
+  ) : (
+    <div className="text-gray-400 text-sm">Loading sizes...</div>
+  )}
+</div>
 
               {/* Quantity */}
               <div className="mt-6">
@@ -355,18 +405,12 @@ const BormaCashew = ({ onClose }) => {
                   Total:
                 </span>
                 <div className="text-right">
-                  <p className="text-lg sm:text-xl font-bold text-[#8B4513]">
-                    ₹
-                    {(
-                      product.basePrice *
-                      selectedSize.multiplier *
-                      quantity
-                    ).toFixed(2)}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {quantity} × {selectedSize.label} @ ₹
-                    {product.basePrice * selectedSize.multiplier}
-                  </p>
+               <p className="text-lg sm:text-xl font-bold text-[#8B4513]">
+  ₹{(Number(selectedSize.price || 0) * quantity).toFixed(2)}
+</p>
+<p className="text-xs sm:text-sm text-gray-500">
+  {quantity} × {selectedSize.label || "-"} @ ₹{selectedSize.price || 0}
+</p>
                 </div>
               </div>
             </div>

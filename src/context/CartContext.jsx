@@ -1,18 +1,27 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
 
+  // ✅ Load from localStorage
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  // ✅ Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  // ✅ Add to Cart
   const addToCart = (item) => {
-    // Validate required fields
     if (!item.id || !item.name || typeof item.price !== "number") {
       console.error("Invalid cart item:", item);
       return;
     }
 
-    // Normalize the item structure
     const normalizedItem = {
       id: item.id,
       name: item.name,
@@ -34,23 +43,51 @@ export const CartProvider = ({ children }) => {
             : i
         );
       }
+
       return [...prevItems, normalizedItem];
     });
   };
 
+ const removeFromCart = (id, size) => {
+  setCartItems((prev) => 
+    prev.filter((item) => !(item.id === id && item.size === size))
+  );
+};
+
+  const updateQuantity = (id, size, newQuantity) => {
+  setCartItems((prev) =>
+    prev.map((item) =>
+      item.id === id && item.size === size
+        ? { ...item, quantity: newQuantity }
+        : item
+    )
+  );
+};
+
+  // ✅ Clear Cart
   const clearCart = () => {
     setCartItems([]);
   };
 
+  // ✅ Cart Count
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // ✅ Cart Total
+  const cartTotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
         addToCart,
-        cartCount,
+        removeFromCart,
+        updateQuantity,
         clearCart,
+        cartCount,
+        cartTotal,
       }}
     >
       {children}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import W240 from "../wwimages/W240.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api";
 import {
   FaLeaf,
   FaHeart,
@@ -19,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 const W240Details = ({ onClose }) => {
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [product, setProduct] = useState({
+    id: null, // ✅ Add id field
     name: "Whole White W240",
     image: W240,
     category: "Whole White",
@@ -30,32 +32,29 @@ const W240Details = ({ onClose }) => {
 
   // Fetch product details from backend
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(
-          `https://red-clay-backend.onrender.com/api/export-premium-cashews?name=${encodeURIComponent(product.name)}`
-        );
-        const data = await response.json();
-        if (data.success && Array.isArray(data.data)) {
-          // Find by name
-          const found = data.data.find(p => p.name === product.name);
-          if (found) {
-            setProduct(prev => ({
-              ...prev,
-              sizes: found.sizes.map((s) => ({
-                id: s.id,
-                label: s.size,
-                price: s.price
-              })),
-            }));
-          }
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        const found = data.data.find(p => p.name === product.name);
+        if (found) {
+          setProduct(prev => ({
+            ...prev,
+            sizes: found.sizes.map((s) => ({
+              id: s.id,
+              label: s.size,
+              price: s.price,
+            })),
+          }));
         }
-      } catch (err) {
-        
       }
-    };
-    fetchProduct();
-  }, []);
+    } catch (err) {
+      console.error("Failed to fetch W240 product:", err);
+    }
+  };
+  fetchProduct();
+}, []);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
@@ -65,36 +64,60 @@ const W240Details = ({ onClose }) => {
 
   const selectedSize =
     product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0] || { label: "", price: 0 };
+    product.sizes[0] || { id: null, label: "", price: 0 };
 
   useEffect(() => {
-    if (product?.sizes?.length > 0) {
+    if (product?.sizes?.length > 0 && !selectedSizeId) {
       setSelectedSizeId(product.sizes[0].id);
     }
-  }, [product.sizes]);
+  }, [product.sizes, selectedSizeId]);
 
-  const handleAddToCart = () => {
-    const cartItem = {
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: selectedSize.price,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
-    addToCart(cartItem);
-    document.getElementById("cart-notification").classList.remove("hidden");
-    setTimeout(() => {
-      document.getElementById("cart-notification").classList.add("hidden");
-    }, 2000);
+const handleAddToCart = () => {
+  const cartItem = {
+    id: selectedSizeId,
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    price: Number(selectedSize.price),
+    size: selectedSize.label,
+    quantity: quantity,
+    description: product.description,
+    stock: product.stock,
   };
 
-   const handleBuyNow = () => {
-     onClose();
-     navigate(`/products/${product.name}`);
-   };
+  addToCart(cartItem);
+
+  const notification = document.getElementById("cart-notification");
+  if (notification) {
+    notification.classList.remove("hidden");
+    setTimeout(() => {
+      notification.classList.add("hidden");
+    }, 2000);
+  }
+};
+
+
+const handleBuyNow = () => {
+  onClose();
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
+};
 
   const tabContent = {
     features: (
@@ -102,7 +125,7 @@ const W240Details = ({ onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="grid grid-cols-1 sm:grid-cols-F2 gap-3"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
       >
         {[
           {
@@ -237,7 +260,7 @@ const W240Details = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -245,13 +268,13 @@ const W240Details = ({ onClose }) => {
       {/* Cart Notification */}
       <div
         id="cart-notification"
-        className="hidden fixed top-4 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-50"
+        className="hidden fixed top-1 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-[100]"
       >
         Added to cart successfully!
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
+       className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative z-[10000]"
         initial={{ scale: 0.9, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
@@ -259,7 +282,7 @@ const W240Details = ({ onClose }) => {
         {/* Close button */}
         <motion.button
           onClick={onClose}
-          className="absolute top-20 right-4 bg-white hover:bg-red-100 hover:text-white text-red-200 rounded-full w-10 h-10 flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white text-red-500 shadow-md hover:bg-red-500 hover:text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center z-[10001]"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
@@ -268,10 +291,10 @@ const W240Details = ({ onClose }) => {
         </motion.button>
 
         {/* Scrollable content */}
-        <div className="px-4 sm:px-8 pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
+        <div className="px-4 sm:px-8 pt-10 sm:pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
           {/* Product header */}
           <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#2E8B57] mb-2">
+           <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#2E8B57] leading-snug mb-2">
               W240 Cashew Nuts - Standard Large Grade
             </h1>
            
@@ -461,7 +484,7 @@ const W240Details = ({ onClose }) => {
       </motion.div>
       {isImageZoomed && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-90 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-90 z-[10002] flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

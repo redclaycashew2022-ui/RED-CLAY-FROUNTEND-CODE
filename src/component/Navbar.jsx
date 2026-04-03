@@ -408,7 +408,11 @@ const Navbar = () => {
                 </button>
               )}
               
-              <button onClick={() => setShowCartPreview(!showCartPreview)} className="relative" aria-label="Cart">
+<button 
+  onClick={() => navigate("/cart")}  
+  className="relative"
+  aria-label="Cart"
+>
                 <FaShoppingCart className="text-[#C1440E] h-6 w-6" />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-[#C1440E] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
@@ -555,7 +559,11 @@ const Navbar = () => {
                     </button>
                   )}
                   
-                  <button onClick={() => setShowCartPreview(!showCartPreview)} className="relative">
+                 <button 
+  onClick={() => navigate("/cart")}  // 👈 CHANGE THIS
+  className="relative"
+  aria-label="Cart"
+>
                     <FaShoppingCart className="text-[#C1440E] h-6 w-6 hover:text-[#2E8B57] cursor-pointer" />
                     {cartCount > 0 && (
                       <span className="absolute -top-2 -right-2 bg-[#C1440E] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
@@ -642,43 +650,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Cart Preview */}
-          <ErrorBoundary>
-            {showCartPreview && (
-              <div className={`cart-preview fixed md:absolute right-4 w-72 bg-white rounded-lg shadow-xl z-50 p-4 transition-all duration-300 ease-in-out ${isMobileMenuOpen ? "top-48" : "top-36"} ${showCartPreview ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
-                <div className="flex justify-between items-center mb-3 pb-2 border-b">
-                  <h3 className="font-bold text-lg">Your Cart ({cartCount})</h3>
-                  <button onClick={() => setShowCartPreview(false)} className="text-gray-500 hover:text-[#C1440E]">
-                    <FaTimes className="h-5 w-5" />
-                  </button>
-                </div>
-                
-                {cartItems.length === 0 ? (
-                  <div className="py-6 text-center">
-                    <p className="text-gray-500 mb-4">Your cart is empty</p>
-                    <button onClick={() => { navigate("/products"); setShowCartPreview(false); }} className="bg-[#2E8B57] hover:bg-[#C1440E] text-white px-4 py-2 rounded-lg">
-                      Continue Shopping
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="max-h-60 overflow-y-auto py-2">
-                      {cartItems.map((item, index) => (
-                        <div key={`${item.id}-${index}`} className="flex items-center py-2 border-b">
-                          <img src={item.image} alt={item.name} className="w-12 h-12 object-contain mr-3" />
-                          <div className="flex-1">
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-gray-600">{item.size} × {item.quantity} - ₹{item.price * item.quantity}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                   
-                  </>
-                )}
-              </div>
-            )}
-          </ErrorBoundary>
+        
         </nav>
       </div>
       

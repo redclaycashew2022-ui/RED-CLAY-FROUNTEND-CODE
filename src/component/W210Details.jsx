@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import W210 from "../wwimages/W210.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api";
 import {
   FaLeaf,
   FaHeart,
@@ -13,44 +14,62 @@ import {
   FaBolt,
   FaStar,
   FaTimes,
-  FaSearchPlus,
-  FaSearchMinus,
+
+ 
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const W210Details = ({ onClose }) => {
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [position, setPosition] = useState({ x: 50, y: 50 });
-  const imgRef = useRef(null);
-    const navigate = useNavigate();
+ 
+  const navigate = useNavigate();
 
-  const product = {
+    const [product, setProduct] = useState({
     id: 2,
-    name: "Whole White W210",
+    name: "W210 Cashew Nuts",
     image: W210,
     category: "Whole White",
     description: "Premium quality medium-large cashews (210 nuts per pound)",
-    basePrice: 545,
-    sizes: [
-      { id: "size-250", label: "250g", multiplier: 1 },
-      { id: "size-500", label: "500g", multiplier: 2 },
-      { id: "size-1kg", label: "1kg", multiplier: 4 },
-    ],
+    sizes: [],
     stock: 45,
     rating: 4.7,
     isNew: true,
-  };
+  });
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [activeTab, setActiveTab] = useState("features");
   const { addToCart } = useCart();
-  
 
-  const selectedSize =
-    product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0];
+const selectedSize =
+  product.sizes.find((size) => size.id === selectedSizeId) ||
+  product.sizes[0] || 
+  { id: "", label: "", price: 0 };
+
+    useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const found = data.data.find(p => p.name === product.name);
+          if (found) {
+            setProduct(prev => ({
+              ...prev,
+              sizes: found.sizes.map((s) => ({
+                id: s.id,
+                label: s.size,
+                price: s.price,
+              })),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch W210 product:", err);
+      }
+    };
+    fetchProduct();
+  }, []);
+
 
   useEffect(() => {
     if (product?.sizes?.length > 0 && !selectedSizeId) {
@@ -59,58 +78,63 @@ const W210Details = ({ onClose }) => {
   }, [product, selectedSizeId]);
 
   const handleAddToCart = () => {
+    // ✅ Validate that we have a selected size
+    if (!selectedSize) {
+      console.error("No size selected");
+      alert("Please select a size before adding to cart");
+      return;
+    }
+
+    // ✅ Use size ID as the unique identifier for cart items
     const cartItem = {
-      id: product.id,
-      name: product.name,
+    id: selectedSizeId,          
+    name: product.name,
       image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
+    category: product.category,
+  price: Number(selectedSize.price),
       size: selectedSize.label,
       quantity: quantity,
-      description: product.description,
-      stock: product.stock,
+    description: product.description,
+    stock: product.stock,
     };
 
+    console.log("Adding to cart:", cartItem);
+    
     addToCart(cartItem);
-    document.getElementById("cart-notification").classList.remove("hidden");
-    setTimeout(() => {
-      document.getElementById("cart-notification").classList.add("hidden");
-    }, 2000);
-  };
-
-  const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 0.5, 3));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 0.5, 1));
-  };
-
-  const handleResetZoom = () => {
-    setZoomLevel(1);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!imgRef.current || zoomLevel === 1) return;
-
-    const { left, top, width, height } = imgRef.current.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setPosition({ x, y });
-  };
-
-  const handleImageClick = () => {
-    if (zoomLevel === 1) {
-      setIsImageZoomed(true);
-    } else {
-      handleResetZoom();
+    
+    const notification = document.getElementById("cart-notification");
+    if (notification) {
+      notification.classList.remove("hidden");
+      setTimeout(() => {
+        notification.classList.add("hidden");
+      }, 2000);
     }
   };
 
-  
+
+
   const handleBuyNow = () => {
     onClose();
-    navigate(`/products/${product.id}`);
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+
+    
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
   };
 
   const tabContent = {
@@ -254,7 +278,7 @@ const W210Details = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+     className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -262,13 +286,13 @@ const W210Details = ({ onClose }) => {
       {/* Cart Notification */}
       <div
         id="cart-notification"
-        className="hidden fixed top-4 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-50"
+        className="hidden fixed top-1 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-[100]"
       >
         Added to cart successfully!
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
+       className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative z-[10000]"
         initial={{ scale: 0.9, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
@@ -276,8 +300,7 @@ const W210Details = ({ onClose }) => {
         {/* Close button */}
         <motion.button
           onClick={onClose}
-          className="absolute top-20 right-4 bg-white hover:bg-red-100 hover:text-white text-red-200 rounded-full w-10 h-10 flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
+         className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white text-red-500 shadow-md hover:bg-red-500 hover:text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center z-50"          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
         >
@@ -285,7 +308,7 @@ const W210Details = ({ onClose }) => {
         </motion.button>
 
         {/* Scrollable content */}
-        <div className="px-4 sm:px-8 pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
+        <div className="px-4 sm:px-8 pt-10 sm:pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
           {/* Product header */}
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -293,96 +316,42 @@ const W210Details = ({ onClose }) => {
                 W210 Cashew Nuts
               </h1>
               {product.isNew && (
-                <span className="bg-[#C1440E] text-white text-xs px-2 py-1 rounded-full self-start">
+                <span className="bg-[#C1440E] text-white text-xs px-2 py-1 rounded-full">
                   PREMIUM
                 </span>
               )}
             </div>
-            <p className="text-gray-600 text-sm sm:text-base">
-              Premium Quality Jumbo Cashews
-            </p>
+         
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-            {/* Image section */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            
             <div className="lg:w-2/5">
-              <div className="relative">
-                <div
-                  className="overflow-hidden rounded-xl shadow-lg border-4 border-[#2E8B57]/20"
-                  onMouseMove={handleMouseMove}
-                >
-                  <motion.div
-                    className={`cursor-${
-                      zoomLevel === 1 ? "zoom-in" : "zoom-out"
-                    }`}
-                    onClick={handleImageClick}
-                    whileHover={{ scale: zoomLevel === 1 ? 1.02 : 1 }}
-                  >
-                    <img
-                      ref={imgRef}
-                      src={W210}
-                      alt="Whole White W210 Cashews"
-                      className="w-full h-auto transition-transform duration-300"
-                      style={{
-                        transform: `scale(${zoomLevel})`,
-                        transformOrigin: `${position.x}% ${position.y}%`,
-                      }}
-                    />
-                  </motion.div>
-                </div>
-                {product.isNew && (
-                  <div className="absolute top-2 left-2 bg-[#C1440E] text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
-                    NEW
-                  </div>
-                )}
-                {zoomLevel > 1 && (
-                  <div className="absolute bottom-2 right-2 flex gap-2 bg-white/80 p-1 rounded-full">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleZoomOut();
-                      }}
-                      className="p-1 text-gray-700 hover:text-[#2E8B57]"
-                      title="Zoom Out"
-                    >
-                      <FaSearchMinus />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleResetZoom();
-                      }}
-                      className="p-1 text-xs font-medium text-gray-700 hover:text-[#2E8B57]"
-                      title="Reset Zoom"
-                    >
-                      {Math.round(zoomLevel * 100)}%
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleZoomIn();
-                      }}
-                      className="p-1 text-gray-700 hover:text-[#2E8B57]"
-                      title="Zoom In"
-                    >
-                      <FaSearchPlus />
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              {/* Price display */}
-              <div className="mt-3 sm:mt-4 bg-[#2E8B57]/10 p-2 sm:p-3 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-sm sm:text-base">
-                    Price:
-                  </span>
-                  <span className="text-[#2E8B57] font-bold sm:text-lg">
-                    ₹{product.basePrice * selectedSize.multiplier} /{" "}
-                    {selectedSize.label}
-                  </span>
-                </div>
-              </div>
+            <div className="relative">
+
+    {/* ✅ IMAGE ADD HERE */}
+    <img
+      src={W210}
+      alt="W210 Cashew"
+      className="w-full max-h-[250px] sm:max-h-[350px] object-contain rounded-xl shadow-md"
+    />
+
+
+  </div>
+           
+
+     
+<div className="mt-3 sm:mt-4 bg-[#2E8B57]/10 p-2 sm:p-3 rounded-lg">
+  <div className="flex justify-between items-center">
+    <span className="font-semibold text-sm sm:text-base">Price:</span>
+    <span className="text-[#2E8B57] font-bold sm:text-lg">
+      {selectedSize.price 
+        ? `₹${selectedSize.price} / ${selectedSize.label}` 
+        : "Loading..."} {/* ✅ show loading while API fetches */}
+    </span>
+  </div>
+</div>
 
               {/* Size selection */}
               <div className="mt-4 sm:mt-6">
@@ -392,7 +361,7 @@ const W210Details = ({ onClose }) => {
                     <motion.button
                       key={size.id}
                       onClick={() => setSelectedSizeId(size.id)}
-                      className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
                         selectedSizeId === size.id
                           ? "bg-[#2E8B57] text-white"
                           : "bg-gray-100 text-gray-800 hover:bg-gray-200"
@@ -401,21 +370,16 @@ const W210Details = ({ onClose }) => {
                       whileTap={{ scale: 0.95 }}
                     >
                       <span className="whitespace-nowrap">{size.label}</span>
-                      <span className="hidden sm:inline">
-                        {" "}
-                        (₹{product.basePrice * size.multiplier})
-                      </span>
-                      <span className="sm:hidden">
-                        /₹{product.basePrice * size.multiplier}
-                      </span>
+                        <span className="hidden sm:inline"> (₹{size.price})</span>
+                        <span className="sm:hidden">/₹{size.price}</span>
                     </motion.button>
                   ))}
                 </div>
               </div>
 
               {/* Quantity selector */}
-              <div className="mt-4 sm:mt-6">
-                <h3 className="text-lg font-semibold mb-2">Quantity:</h3>
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Quantity:</h3>
                 <div className="flex items-center border border-gray-300 rounded-full w-max">
                   <motion.button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -495,7 +459,7 @@ const W210Details = ({ onClose }) => {
         </div>
 
         {/* Sticky bottom bar with price and buttons */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 sm:p-4 shadow-lg">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 sm:p-4 shadow-lg z-30">
           <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Total price display */}
             <div className="flex-1 w-full">
@@ -505,16 +469,10 @@ const W210Details = ({ onClose }) => {
                 </span>
                 <div className="text-right">
                   <p className="text-lg sm:text-xl font-bold text-[#2E8B57]">
-                    ₹
-                    {(
-                      product.basePrice *
-                      selectedSize.multiplier *
-                      quantity
-                    ).toFixed(2)}
+                    ₹{(Number(selectedSize.price) * quantity).toFixed(2)}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    {quantity} × {selectedSize.label} @ ₹
-                    {product.basePrice * selectedSize.multiplier}
+                    {quantity} × {selectedSize.label} @ ₹{selectedSize.price}
                   </p>
                 </div>
               </div>
@@ -545,53 +503,8 @@ const W210Details = ({ onClose }) => {
         </div>
       </motion.div>
 
-      {/* Fullscreen zoom modal */}
-      {isImageZoomed && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => {
-            setIsImageZoomed(false);
-            handleResetZoom();
-          }}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsImageZoomed(false);
-              handleResetZoom();
-            }}
-            className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300"
-          >
-            <FaTimes />
-          </button>
 
-          <div
-            className="max-w-full max-h-full w-full h-full flex items-center justify-center overflow-hidden"
-            onMouseMove={handleMouseMove}
-          >
-            <img
-              src={W210}
-              alt="Zoomed Whole White W210 Cashews"
-              className="max-h-full max-w-full object-contain transition-transform duration-300"
-              style={{
-                transform: `scale(${zoomLevel})`,
-                transformOrigin: `${position.x}% ${position.y}%`,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (zoomLevel === 1) {
-                  handleZoomIn();
-                } else {
-                  handleResetZoom();
-                }
-              }}
-            />
-          </div>
-        </motion.div>
-      )}
+        
     </motion.div>
   );
 };

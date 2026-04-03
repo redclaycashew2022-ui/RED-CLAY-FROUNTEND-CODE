@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import W320 from "../wwimages/W320.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api";
 import {
   FaHeart,
   FaFire,
@@ -18,22 +19,19 @@ import { useNavigate } from "react-router-dom";
 
 const W320Details = ({ onClose }) => {
   const [isImageZoomed, setIsImageZoomed] = useState(false);
-    const navigate = useNavigate()
-  const product = {
+  const navigate = useNavigate();
+  
+  // ✅ Updated product with proper size IDs and prices
+   const [product, setProduct] = useState({
     id: 4,
-    name: "Whole White W320",
+    name: "W320 Cashew Nuts", 
     image: W320,
     category: "Whole White",
     description: "The 'Classic' Cashew Grade - 320 nuts per pound",
-    basePrice: 850,
-    sizes: [
-      { id: "size-250", label: "250g", multiplier: 1 },
-      { id: "size-500", label: "500g", multiplier: 2 },
-      { id: "size-1kg", label: "1kg", multiplier: 4 },
-    ],
+    sizes: [],
     stock: 75,
     rating: 4.6,
-  };
+  });
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
@@ -42,40 +40,86 @@ const W320Details = ({ onClose }) => {
 
   const selectedSize =
     product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0];
+    product.sizes[0] ||
+    { id: "", label: "", price: 0 };
+
+     useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const found = data.data.find(p => p.name === product.name);
+          if (found) {
+            setProduct(prev => ({
+              ...prev,
+              sizes: found.sizes.map((s) => ({
+                id: s.id,
+                label: s.size,
+                price: s.price,
+              })),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch W320 product:", err);
+      }
+    };
+    fetchProduct();
+  }, []);
 
   useEffect(() => {
-    if (product?.sizes?.length > 0 && !selectedSizeId) {
-      setSelectedSizeId(product.sizes[0].id);
-    }
-  }, [product, selectedSizeId]);
+  if (product?.sizes?.length > 0) {
+    setSelectedSizeId(product.sizes[0].id);
+  }
+}, [product.sizes]);
 
-
-
-  const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
-
-    addToCart(cartItem);
-    document.getElementById("cart-notification").classList.remove("hidden");
-    setTimeout(() => {
-      document.getElementById("cart-notification").classList.add("hidden");
-    }, 2000);
+const handleAddToCart = () => {
+  const cartItem = {
+    id: selectedSizeId,
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    price: Number(selectedSize.price),
+    size: selectedSize.label,
+    quantity: quantity,
+    description: product.description,
+    stock: product.stock,
   };
 
-   const handleBuyNow = () => {
-     onClose();
-     navigate(`/products/${product.id}`);
-   };
+  addToCart(cartItem);
+
+  const notification = document.getElementById("cart-notification");
+  if (notification) {
+    notification.classList.remove("hidden");
+    setTimeout(() => {
+      notification.classList.add("hidden");
+    }, 2000);
+  }
+};
+
+const handleBuyNow = () => {
+  onClose();
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
+};
+  
   const tabContent = {
     features: (
       <motion.div
@@ -193,29 +237,29 @@ const W320Details = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Cart Notification */}
-      <div
+      
+     <div
         id="cart-notification"
-        className="hidden fixed top-4 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-50"
+        className="hidden fixed top-1 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-[100]"
       >
         Added to cart successfully!
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
+      className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative z-[10000]"
         initial={{ scale: 0.9, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
-        {/* Close button */}
+      
         <motion.button
           onClick={onClose}
-          className="absolute top-20 right-4 bg-white hover:bg-red-100 hover:text-white text-red-200 rounded-full w-10 h-10 flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white text-red-500 shadow-md hover:bg-red-500 hover:text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center z-50"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
@@ -223,13 +267,12 @@ const W320Details = ({ onClose }) => {
           <FaTimes className="w-7 h-7" />
         </motion.button>
 
-        {/* Scrollable content */}
-        <div className="px-4 sm:px-8 pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
-          {/* Product header */}
+       <div className="px-4 sm:px-8 pt-10 sm:pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
+     
           <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#2E8B57] mb-2">
-              W320 Cashew Nuts - The Classic Grade
-            </h1>
+            <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#2E8B57] leading-snug mb-2">
+    W320 Cashew Nuts - The Classic Grade
+  </h1>
             <p className="text-gray-600 text-sm sm:text-base">
               Perfect balance of size, quality, and price
             </p>
@@ -255,13 +298,14 @@ const W320Details = ({ onClose }) => {
                     Price:
                   </span>
                   <span className="text-[#2E8B57] font-bold sm:text-lg">
-                    ₹{product.basePrice * selectedSize.multiplier} /{" "}
-                    {selectedSize.label}
+                  {selectedSize.price
+  ? `₹${selectedSize.price} / ${selectedSize.label}`
+  : "Not available"}
                   </span>
                 </div>
               </div>
 
-              {/* Size selection */}
+            
               <div className="mt-4 sm:mt-6">
                 <h3 className="text-lg font-semibold mb-2">Select Size:</h3>
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
@@ -280,10 +324,10 @@ const W320Details = ({ onClose }) => {
                       <span className="whitespace-nowrap">{size.label}</span>
                       <span className="hidden sm:inline">
                         {" "}
-                        (₹{product.basePrice * size.multiplier})
+                        (₹{size.price})
                       </span>
                       <span className="sm:hidden">
-                        /₹{product.basePrice * size.multiplier}
+                        /₹{size.price}
                       </span>
                     </motion.button>
                   ))}
@@ -381,16 +425,10 @@ const W320Details = ({ onClose }) => {
                 </span>
                 <div className="text-right">
                   <p className="text-lg sm:text-xl font-bold text-[#2E8B57]">
-                    ₹
-                    {(
-                      product.basePrice *
-                      selectedSize.multiplier *
-                      quantity
-                    ).toFixed(2)}
+                    ₹{(selectedSize.price * quantity).toFixed(2)}
                   </p>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    {quantity} × {selectedSize.label} @ ₹
-                    {product.basePrice * selectedSize.multiplier}
+                    {quantity} × {selectedSize.label} @ ₹{selectedSize.price}
                   </p>
                 </div>
               </div>
@@ -440,7 +478,7 @@ const W320Details = ({ onClose }) => {
           <div className="max-w-4xl w-full h-full flex items-center justify-center">
             <img
               src={W320}
-              alt="Zoomed Whole White W180 Cashews"
+              alt="Zoomed Whole White W320 Cashews"
               className="max-h-full max-w-full object-contain"
               onClick={() => setIsImageZoomed(true)}
             />

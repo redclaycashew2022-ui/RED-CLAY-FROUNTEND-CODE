@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../services/api";
 
 const PremiumCashewManager = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("manage"); // "manage" or "export"
-  
-  // Manage Premium Cashew state
+  const [activeTab, setActiveTab] = useState("manage"); 
+ 
   const [premiumProducts, setPremiumProducts] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -15,7 +15,7 @@ const PremiumCashewManager = () => {
   });
   const [editingId, setEditingId] = useState(null);
   
-  // Export Premium Cashew state
+ 
   const [exportProducts, setExportProducts] = useState([]);
   const [exportFormData, setExportFormData] = useState({
     name: "",
@@ -28,24 +28,20 @@ const PremiumCashewManager = () => {
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, type: null });
 
-  // Get admin phone from localStorage/session
-  const getAdminPhone = () => {
-    return localStorage.getItem("adminPhone") || sessionStorage.getItem("adminPhone");
-  };
+ 
+ const getAdminPhone = () => {
+  return localStorage.getItem("phoneNumber") || sessionStorage.getItem("phoneNumber");
+};
 
-  // Show message function
   const showMessage = (type, text) => {
     setMessage({ type, text });
     setTimeout(() => setMessage({ type: "", text: "" }), 3000);
   };
 
-  // ============= MANAGE PREMIUM CASHEW API CALLS =============
-
-  // GET /api/premium-cashews - Get all products
   const getAllPremiumCashews = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://red-clay-backend.onrender.com/api/premium-cashews", {
+    const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +62,7 @@ const PremiumCashewManager = () => {
   const getPremiumCashewById = async (id) => {
     setLoading(true);
     try {
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/premium-cashews/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -102,15 +98,16 @@ const PremiumCashewManager = () => {
         price: parseFloat(productData.price)
       };
 
-      const response = await fetch("https://red-clay-backend.onrender.com/api/premium-cashews", {
+   const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-phone-number": getAdminPhone(),
         },
+        
         body: JSON.stringify(payload),
       });
-      
+      console.log(getAdminPhone());
       const data = await response.json();
       
       if (data.success) {
@@ -132,7 +129,7 @@ const PremiumCashewManager = () => {
   const updatePremiumCashew = async (id, productData) => {
     setLoading(true);
     try {
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/premium-cashews/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +160,7 @@ const PremiumCashewManager = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/premium-cashews/${id}`, {
+ const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -186,13 +183,11 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // ============= EXPORT PREMIUM CASHEW API CALLS =============
-
-  // GET /api/export-premium-cashews - Get all export products
+ 
   const getAllExportPremiumCashews = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://red-clay-backend.onrender.com/api/export-premium-cashews", {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -213,7 +208,7 @@ const PremiumCashewManager = () => {
   const getExportPremiumCashewById = async (id) => {
     setLoading(true);
     try {
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/export-premium-cashews/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -256,7 +251,7 @@ const PremiumCashewManager = () => {
         })).filter(s => s.size && !isNaN(s.price))
       };
 
-      const response = await fetch("https://red-clay-backend.onrender.com/api/export-premium-cashews", {
+     const response = await fetch(`${API_BASE_URL}/export-premium-cashews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -294,7 +289,7 @@ const PremiumCashewManager = () => {
         })).filter(s => s.size && !isNaN(s.price))
       };
 
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/export-premium-cashews/${id}`, {
+   const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -325,7 +320,7 @@ const PremiumCashewManager = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/export-premium-cashews/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

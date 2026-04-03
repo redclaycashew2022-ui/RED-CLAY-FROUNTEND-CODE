@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import BB from "../wwimages/BB.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api"; 
 import {
   FaHeart,
   FaFire,
@@ -19,22 +20,16 @@ import { useNavigate } from "react-router-dom";
 
 const BBDetails = ({ onClose }) => {
   const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const product = {
-    id: 8,
-    name: "BB Cashews",
-    image: BB,
-    category: "Baby Bits",
-    description:
-      "Baby Bits, Big Flavor - Small granules with full cashew taste",
-    basePrice: 110,
-    sizes: [
-      { id: "size-250", label: "250g", multiplier: 1 },
-      { id: "size-500", label: "500g", multiplier: 2 },
-      { id: "size-1kg", label: "1kg", multiplier: 4 },
-    ],
-    stock: 90,
-    rating: 4.1,
-  };
+  const [product, setProduct] = useState({
+  id: 8,
+  name: "BB Cashews", 
+  image: BB,
+  category: "Baby Bits",
+  description: "Baby Bits, Big Flavor - Small granules with full cashew taste",
+  sizes: [],
+  stock: 90,
+  rating: 4.1,
+});
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
@@ -43,8 +38,34 @@ const BBDetails = ({ onClose }) => {
     const navigate = useNavigate()
 
   const selectedSize =
-    product.sizes.find((size) => size.id === selectedSizeId) ||
-    product.sizes[0];
+  product.sizes.find((size) => size.id === selectedSizeId) ||
+  product.sizes[0] ||
+  { id: "", label: "", price: 0 };
+
+    useEffect(() => {
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        const found = data.data.find(p => p.name === product.name);
+        if (found) {
+          setProduct(prev => ({
+            ...prev,
+            sizes: found.sizes.map((s) => ({
+              id: s.id,
+              label: s.size,
+              price: s.price,
+            })),
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch BB product:", err);
+    }
+  };
+  fetchProduct();
+}, []);
 
   useEffect(() => {
     if (product?.sizes?.length > 0 && !selectedSizeId) {
@@ -53,29 +74,49 @@ const BBDetails = ({ onClose }) => {
   }, [product, selectedSizeId]);
 
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
-
-    addToCart(cartItem);
-    document.getElementById("cart-notification").classList.remove("hidden");
-    setTimeout(() => {
-      document.getElementById("cart-notification").classList.add("hidden");
-    }, 2000);
+  const cartItem = {
+    id: selectedSizeId,          
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    price: Number(selectedSize.price),  
+    size: selectedSize.label,
+    quantity: quantity,
+    description: product.description,
+    stock: product.stock,
   };
 
-   const handleBuyNow = () => {
-     onClose();
-     navigate(`/products/${product.id}`);
-   };
+  addToCart(cartItem);
+  document.getElementById("cart-notification").classList.remove("hidden");
+  setTimeout(() => {
+    document.getElementById("cart-notification").classList.add("hidden");
+  }, 2000);
+};
+
+   
+const handleBuyNow = () => {
+  onClose();
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+
+    
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
+};
   const tabContent = {
     features: (
       <motion.div
@@ -192,21 +233,21 @@ const BBDetails = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+       className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       {/* Cart Notification */}
-      <div
+        <div
         id="cart-notification"
-        className="hidden fixed top-4 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-50"
+        className="hidden fixed top-1 right-4 bg-[#2E8B57] text-white px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-lg shadow-lg z-[100]"
       >
         Added to cart successfully!
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
+        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative z-[10000]"
         initial={{ scale: 0.9, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
@@ -214,7 +255,7 @@ const BBDetails = ({ onClose }) => {
         {/* Close button */}
         <motion.button
           onClick={onClose}
-          className="absolute top-20 right-4 bg-white hover:bg-red-100 hover:text-white text-red-200 rounded-full w-10 h-10 flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white text-red-500 shadow-md hover:bg-red-500 hover:text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center z-50"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
@@ -253,10 +294,11 @@ const BBDetails = ({ onClose }) => {
                   <span className="font-semibold text-sm sm:text-base">
                     Price:
                   </span>
-                  <span className="text-[#2E8B57] font-bold sm:text-lg">
-                    ₹{product.basePrice * selectedSize.multiplier} /{" "}
-                    {selectedSize.label}
-                  </span>
+               <span className="text-[#2E8B57] font-bold sm:text-lg">
+  {selectedSize.price
+    ? `₹${selectedSize.price} / ${selectedSize.label}`
+    : "Loading..."}
+</span>
                 </div>
               </div>
 
@@ -264,28 +306,29 @@ const BBDetails = ({ onClose }) => {
               <div className="mt-4 sm:mt-6">
                 <h3 className="text-lg font-semibold mb-2">Select Size:</h3>
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                  {product.sizes.map((size) => (
-                    <motion.button
-                      key={size.id}
-                      onClick={() => setSelectedSizeId(size.id)}
-                      className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
-                        selectedSizeId === size.id
-                          ? "bg-[#2E8B57] text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <span className="whitespace-nowrap">{size.label}</span>
-                      <span className="hidden sm:inline">
-                        {" "}
-                        (₹{product.basePrice * size.multiplier})
-                      </span>
-                      <span className="sm:hidden">
-                        /₹{product.basePrice * size.multiplier}
-                      </span>
-                    </motion.button>
-                  ))}
+                  {product.sizes.length > 0 ? (
+  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+    {product.sizes.map((size) => (
+      <motion.button
+        key={size.id}
+        onClick={() => setSelectedSizeId(size.id)}
+        className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm ${
+          selectedSizeId === size.id
+            ? "bg-[#2E8B57] text-white"
+            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+        }`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <span className="whitespace-nowrap">{size.label}</span>
+        <span className="hidden sm:inline"> (₹{size.price})</span>
+        <span className="sm:hidden">/₹{size.price}</span>
+      </motion.button>
+    ))}
+  </div>
+) : (
+  <div className="text-gray-400 text-sm">Loading sizes...</div>
+)}
                 </div>
               </div>
 
@@ -377,18 +420,12 @@ const BBDetails = ({ onClose }) => {
                   Total:
                 </span>
                 <div className="text-right">
-                  <p className="text-lg sm:text-xl font-bold text-[#2E8B57]">
-                    ₹
-                    {(
-                      product.basePrice *
-                      selectedSize.multiplier *
-                      quantity
-                    ).toFixed(2)}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {quantity} × {selectedSize.label} @ ₹
-                    {product.basePrice * selectedSize.multiplier}
-                  </p>
+                 <p className="text-lg sm:text-xl font-bold text-[#2E8B57]">
+  ₹{(Number(selectedSize.price || 0) * quantity).toFixed(2)}
+</p>
+<p className="text-xs sm:text-sm text-gray-500">
+  {quantity} × {selectedSize.label || "-"} @ ₹{selectedSize.price || 0}
+</p>
                 </div>
               </div>
             </div>

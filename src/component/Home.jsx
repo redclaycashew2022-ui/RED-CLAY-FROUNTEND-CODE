@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE_URL } from "../services/api";
 
 import fruitImage from "../images/fruit.png";
 import image1 from "../images/image1.png";
@@ -69,7 +70,7 @@ const Home = () => {
   const fetchProductDetails = async (productName) => {
     try {
       const encodedName = encodeURIComponent(productName);
-      const response = await fetch(`https://red-clay-backend.onrender.com/api/export-premium-cashews?name=${encodedName}`);
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews?name=${encodedName}`);
       const data = await response.json();
       
       if (data.success && data.data && data.data.length > 0) {
@@ -248,8 +249,9 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("https://red-clay-backend.onrender.com/api/premium-cashews");
+       const res = await fetch(`${API_BASE_URL}/premium-cashews`);
         const data = await res.json();
+console.log("API PRODUCTS 👉", data.data);
 
         if (data.success) {
           setApiProducts(data.data);
@@ -276,135 +278,151 @@ const Home = () => {
   ];
 
   const products = [
-    {
-      id: 1,
-      name: "Whole White-180",
-      price: 600,
-      image: W180,
-      grade: "W180",
-      description: "Premium large sized cashews with rich flavor",
-    },
-    {
-      id: 2,
-      name: "Whole White-210",
-      price: "545",
-      image: W210,
-      grade: "W210",
-      description: "Excellent quality medium-large cashews",
-    },
-    {
-      id: 3,
-      name: "Whole White-240",
-      price: 499,
-      image: W240,
-      grade: "W240",
-      description: "Standard quality perfect for daily use",
-    },
-    {
-      id: 4,
-      name: "Whole White-320",
-      image: W320,
-      price: "290",
-      grade: "W320",
-      description: "Economical choice without compromising taste",
-    },
-    {
-      id: 5,
-      name: "Whole White-450",
-      image: W450,
-      price: "245",
-      grade: "W450",
-      description: "Great for bulk cooking and processing",
-    },
-    {
-      id: 6,
-      name: "WSplit",
-      image: WSplit,
-      price: "475",
-      grade: "WSplit",
-      description: "Perfect for cooking and snacking",
-    },
-    {
-      id: 7,
-      name: "LWP",
-      price: "375",
-      image: LWP,
-      grade: "LWP",
-      description: "Crunchy cashew splits ideal for sweets, snack mixes",
-    },
-    {
-      id: 8,
-      name: "SP",
-      price: "190",
-      image: SP,
-      grade: "SP",
-      description: "Small Cashew Pieces–Easy use in baking",
-    },
-    {
-      id: 9,
-      name: "BB-Baby Bits",
-      image: BB,
-      price: "110",
-      grade: "BB",
-      description: "Fresh cashew granules ideal for blended recipes",
-    },
-    {
-      id: 10,
-      name: "Roasted Cashew",
-      price: "600",
-      grade: "Roasted",
-      image: Roasted,
-      description: "Golden roasted cashews with a rich",
-    },
-    {
-      id: 11,
-      name: "Salted Cashew",
-      price: "650",
-      grade: "Salted",
-      image: saltedcashew,
-      description: "Crisp, buttery cashews lightly salted",
-    },
-    {
-      id: 12,
-      name: "Borma Cashew Skin",
-      price: "780",
-      grade: "BormaC",
-      image: BormaCashewwithSkin,
-      description: "Rich, retaining their natural skin for extra flavor",
-    },
-    {
-      id: 13,
-      name: "Green Chili",
-      price: "335",
-      grade: "GreenChiliC",
-      image: GreenChili,
-      description: "Green chili kick for a bold, spicy treat",
-    },
-    {
-      id: 14,
-      name: "Block Pepper Salted",
-      price: "250",
-      grade: "BlockPepper",
-      image: BlockPepperSalted,
-      description: "Crunchy cashews zesty black pepper",
-    },
-    {
-      id: 15,
-      name: "Raw Cashew in Skin",
-      price: "275",
-      grade: "RawC",
-      image: RawSpicycashewwithskin,
-      description: "Naturally flavorful cashews with skin",
-    },
-    {
-      id: 16,
-      name: "Honey Roasted",
-      grade: "HoneyC",
-      price: "260",
-      image: honeyroasted,
-      description: "Crunchy cashews glazed golden honey for a sweet",
-    },
-  ];
+  {
+    id: 1,
+    name: "Whole White-180",
+   
+    price: 600,
+    image: W180,
+    grade: "W180",
+    description: "Premium large sized cashews with rich flavor",
+  },
+  {
+    id: 2,
+    name: "Whole White-210",
+  
+    price: "545",
+    image: W210,
+    grade: "W210",
+    description: "Excellent quality medium-large cashews",
+  },
+  {
+    id: 3,
+    name: "Whole White-240",
+
+    price: 499,
+    image: W240,
+    grade: "W240",
+    description: "Standard quality perfect for daily use",
+  },
+  {
+    id: 4,
+    name: "Whole White-320",
+
+    image: W320,
+    price: "290",
+    grade: "W320",
+    description: "Economical choice without compromising taste",
+  },
+  {
+    id: 5,
+    name: "Whole White-450",
+    
+    image: W450,
+    price: "245",
+    grade: "W450",
+    description: "Great for bulk cooking and processing",
+  },
+  {
+    id: 6,
+    name: "WSplit",
+
+    image: WSplit,
+    price: "475",
+    grade: "WSplit",
+    description: "Perfect for cooking and snacking",
+  },
+  {
+    id: 7,
+    name: "LWP",
+   
+    price: "375",
+    image: LWP,
+    grade: "LWP",
+    description: "Crunchy cashew splits ideal for sweets, snack mixes",
+  },
+  {
+    id: 8,
+    name: "SP",
+    
+    price: "190",
+    image: SP,
+    grade: "SP",
+    description: "Small Cashew Pieces–Easy use in baking",
+  },
+  {
+    id: 9,
+    name: "BB-Baby Bits",
+   
+    image: BB,
+    price: "110",
+    grade: "BB",
+    description: "Fresh cashew granules ideal for blended recipes",
+  },
+  {
+    id: 10,
+    name: "Roasted Cashew",
+  
+    price: "600",
+    grade: "Roasted",
+    image: Roasted,
+    description: "Golden roasted cashews with a rich",
+  },
+  {
+    id: 11,
+    name: "Salted Cashew",
+   
+    price: "650",
+    grade: "Salted",
+    image: saltedcashew,
+    description: "Crisp, buttery cashews lightly salted",
+  },
+  {
+    id: 12,
+    name: "Borma Cashew Skin",
+   
+    price: "780",
+    grade: "BormaC",
+    image: BormaCashewwithSkin,
+    description: "Rich, retaining their natural skin for extra flavor",
+  },
+  {
+    id: 13,
+    name: "Green Chili",
+   
+    price: "335",
+    grade: "GreenChiliC",
+    image: GreenChili,
+    description: "Green chili kick for a bold, spicy treat",
+  },
+  {
+    id: 14,
+    name: "Block Pepper Salted",
+
+    price: "250",
+    grade: "BlockPepper",
+    image: BlockPepperSalted,
+    description: "Crunchy cashews zesty black pepper",
+  },
+  {
+    id: 15,
+    name: "Raw Cashew in Skin",
+   
+    price: "275",
+    grade: "RawC",
+    image: RawSpicycashewwithskin,
+    description: "Naturally flavorful cashews with skin",
+  },
+  {
+    id: 16,
+    name: "Honey Roasted",
+
+    grade: "HoneyC",
+    price: "260",
+    image: honeyroasted,
+    description: "Crunchy cashews glazed golden honey for a sweet",
+  },
+];
 
   return (
     <main className="bg-[#FAF9F6] pt-5">
@@ -569,13 +587,15 @@ const Home = () => {
         </motion.h2>
         <div className="overflow-x-auto pb-18">
           <div className="flex space-x-6 w-max px-4">
-            {products.map((product) => {
-              const apiMatch = apiProducts.find(
-                (item) =>
-                  item.name.replace(/\s/g, "").toLowerCase() ===
-                  product.name.replace(/\s/g, "").toLowerCase()
-              );
-
+         {products.map((product) => {
+  const apiMatch = apiProducts.find(
+    (item) =>
+      item.name.trim().toLowerCase() ===
+      product.name.trim().toLowerCase()
+  );
+ console.log("LOCAL apiName:", product.apiName);
+  console.log("API names available:", apiProducts.map(p => p.name));
+  console.log("MATCH:", apiMatch);
               return (
                 <motion.div
                   key={product.id}
@@ -593,10 +613,10 @@ const Home = () => {
                   <div className="p-6">
                     <h3 className="text-xl font-semibold">{product.name}</h3>
                     <p className="text-[#580707] font-semibold">
-                      {apiMatch
-                        ? `${apiMatch.price}₹ / ${apiMatch.size}`
-                        : `${product.price}₹ / 250g`}
-                    </p>
+  {apiMatch
+    ? `${parseFloat(apiMatch.price)}₹ / ${apiMatch.size}`
+    : `${product.price}₹ / 250g`}
+</p>
                     <p className="text-sm text-gray-600 mt-2">
                       {product.description}
                     </p>

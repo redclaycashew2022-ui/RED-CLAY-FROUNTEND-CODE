@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import W180 from "../wwimages/W180.png";
 import { useCart } from "../context/CartContext";
+import { API_BASE_URL } from "../services/api";
 import {
   FaLeaf,
   FaHeart,
@@ -30,39 +31,42 @@ const W180Details = ({ onClose }) => {
     rating: 4.8,
     isNew: true,
   });
+
   // Fetch product details from backend
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(
-          `https://red-clay-backend.onrender.com/api/export-premium-cashews?name=${encodeURIComponent(product.name)}`
-        );
-        const data = await response.json();
-        if (data.success && Array.isArray(data.data)) {
-          const found = data.data.find(p => p.name === product.name);
-          if (found) {
-            setProduct(prev => ({
-              ...prev,
-              sizes: found.sizes.map((s) => ({
-                id: s.id,
-                label: s.size,
-                price: s.price
-              })),
-            }));
-          }
+  const fetchProduct = async () => {
+    try {
+       console.log("Fetching from:", `${API_BASE_URL}/export-premium-cashews`);
+      const response = await fetch(
+        `${API_BASE_URL}/export-premium-cashews`
+      );
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        const found = data.data.find(p => p.name === product.name);  // ✅ match by name
+        if (found) {
+          setProduct(prev => ({
+            ...prev,
+            sizes: found.sizes.map((s) => ({
+              id: s.id,
+              label: s.size,      // ✅ s.size → label
+              price: s.price      // ✅ s.price → price
+            })),
+          }));
         }
-      } catch (err) {
-        // fallback: do nothing
       }
-    };
-    fetchProduct();
-  }, []);
+    } catch (err) {
+      console.error("Failed to fetch product:", err);
+    }
+  };
+  fetchProduct();
+}, []);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [activeTab, setActiveTab] = useState("features");
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  
 
   const selectedSize =
     product.sizes.find((size) => size.id === selectedSizeId) ||
@@ -75,29 +79,48 @@ const W180Details = ({ onClose }) => {
   }, [product.sizes]);
 
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.basePrice * selectedSize.multiplier,
-      size: selectedSize.label,
-      quantity: quantity,
-      description: product.description,
-      stock: product.stock,
-    };
-
-    addToCart(cartItem);
-    document.getElementById("cart-notification").classList.remove("hidden");
-    setTimeout(() => {
-      document.getElementById("cart-notification").classList.add("hidden");
-    }, 2000);
+  const cartItem = {
+    id: selectedSizeId,          
+    name: product.name,
+    image: product.image,
+    category: product.category,
+    price: Number(selectedSize.price),  
+    size: selectedSize.label,
+    quantity: quantity,
+    description: product.description,
+    stock: product.stock,
   };
 
-  const handleBuyNow = () => {
-    onClose();
-    navigate(`/products/${product.id}`);
-  };
+  addToCart(cartItem);
+  document.getElementById("cart-notification").classList.remove("hidden");
+  setTimeout(() => {
+    document.getElementById("cart-notification").classList.add("hidden");
+  }, 2000);
+};
+
+const handleBuyNow = () => {
+  onClose();
+
+  navigate("/productdetails", {
+    state: {
+      product: {
+        id: selectedSizeId,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        image_url: product.image,
+        category: product.category,
+        stock: product.stock,
+
+    
+        sizes: product.sizes.map((s) => ({
+          size: s.label,
+          price: s.price,
+        })),
+      },
+    },
+  });
+};
 
   const tabContent = {
     features: (
@@ -240,7 +263,7 @@ const W180Details = ({ onClose }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4"
+     className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-2 sm:p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -254,16 +277,16 @@ const W180Details = ({ onClose }) => {
       </div>
 
       <motion.div
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative pt-8"
-        initial={{ scale: 0.9, y: 50 }}
+       className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col relative z-[10000]"
+        initial={{ scale: 0.9, y: 50 }}           
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
         {/* Close button - Fixed positioning with higher z-index */}
         <motion.button
           onClick={onClose}
-          className="absolute top-20 right-4 bg-white hover:bg-red-100 hover:text-white text-red-200 rounded-full w-10 h-10 flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
+         className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white text-red-500 shadow-md hover:bg-red-500 hover:text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center z-50"
+         whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
         >
@@ -271,11 +294,11 @@ const W180Details = ({ onClose }) => {
         </motion.button>
 
         {/* Scrollable content */}
-        <div className="px-4 sm:px-8 pt-16 pb-32 overflow-y-auto flex-1 hide-scrollbar">
+        <div className="px-4 sm:px-8 pt-10 sm:pt-12 pb-32 overflow-y-auto flex-1 hide-scrollbar">
           {/* Product header */}
           <div className="mb-6">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#2E8B57]">
+             <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-[#2E8B57] leading-snug">
                 W180 Cashew Nuts - King of Cashews
               </h1>
               {product.isNew && (
@@ -284,34 +307,27 @@ const W180Details = ({ onClose }) => {
                 </span>
               )}
             </div>
-            <div className="bg-[#2E8B57]/10 px-3 py-1 rounded-full inline-block mt-2">
-              <span className="text-[#2E8B57] font-semibold">
-                Price: {selectedSize.price ? `₹${selectedSize.price} / ${selectedSize.label}` : "Not available"}
-              </span>
-            </div>
-          </div>
+                     </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Image section */}
+            
             <div className="lg:w-2/5">
               <div className="relative">
-                <motion.div
-                  className="cursor-zoom-in"
-                  onClick={() => setIsImageZoomed(true)}
-                  whileHover={{ scale: 1.02 }}
-                >
+               
                   <img
                     src={W180}
                     alt="Whole White W180 Cashews"
                     className="w-full h-auto rounded-xl shadow-lg border-4 border-[#2E8B57]/20"
                   />
-                </motion.div>
-                {product.isNew && (
-                  <div className="absolute top-2 left-2 bg-[#C1440E] text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-bold">
-                    NEW
-                  </div>
-                )}
+                
+                
               </div>
+               <div className="bg-[#2E8B57]/10 px-3 py-1 rounded-full inline-block mt-2">
+              <span className="text-[#2E8B57] font-semibold">
+                Price: {selectedSize.price ? `₹${selectedSize.price} / ${selectedSize.label}` : "Not available"}
+              </span>
+            </div>
+
 
               {/* Size selection */}
               <div className="mt-6">
@@ -466,35 +482,6 @@ const W180Details = ({ onClose }) => {
         </div>
       </motion.div>
 
-      {/* Image zoom modal */}
-      <AnimatePresence>
-        {isImageZoomed && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-90 z-[70] flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsImageZoomed(false)}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsImageZoomed(false);
-              }}
-              className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full w-12 h-12 flex items-center justify-center z-[71]"
-            >
-              <FaTimes className="w-6 h-6" />
-            </button>
-            <div className="max-w-4xl w-full h-full flex items-center justify-center">
-              <img
-                src={W180}
-                alt="Zoomed Whole White W180 Cashews"
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
