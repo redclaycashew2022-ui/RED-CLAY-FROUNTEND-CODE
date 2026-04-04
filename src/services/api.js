@@ -6,9 +6,9 @@
 //   "http://localhost:5000/api"
 
 
-// export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
 // const API_BASE_URL = "http://localhost:5000/api"; 
-const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+// const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
 
 // Helper function for API calls
 const apiRequest = async (endpoint, options = {}) => {
