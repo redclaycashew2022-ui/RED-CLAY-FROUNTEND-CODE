@@ -1,3 +1,4 @@
+// Complete corrected PremiumCashewManager component
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +16,6 @@ const PremiumCashewManager = () => {
   });
   const [editingId, setEditingId] = useState(null);
   
- 
   const [exportProducts, setExportProducts] = useState([]);
   const [exportFormData, setExportFormData] = useState({
     name: "",
@@ -28,10 +28,9 @@ const PremiumCashewManager = () => {
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, type: null });
 
- 
- const getAdminPhone = () => {
-  return localStorage.getItem("phoneNumber") || sessionStorage.getItem("phoneNumber");
-};
+  const getAdminPhone = () => {
+    return localStorage.getItem("phoneNumber") || sessionStorage.getItem("phoneNumber");
+  };
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -41,7 +40,7 @@ const PremiumCashewManager = () => {
   const getAllPremiumCashews = async () => {
     setLoading(true);
     try {
-    const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
+      const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -58,11 +57,11 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // GET /api/premium-cashews/:id - Get single product by ID
+  // FIXED: Correct API endpoint for getting single product
   const getPremiumCashewById = async (id) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -77,8 +76,9 @@ const PremiumCashewManager = () => {
           price: data.data.price,
         });
         setEditingId(id);
+        showMessage("success", "Product loaded for editing");
       } else {
-        showMessage("error", data.message || "Failed to fetch product");
+        showMessage("error", data.message || "Product not found");
       }
     } catch (error) {
       console.error("Fetch by ID error:", error);
@@ -88,7 +88,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // POST /api/premium-cashews - Create new product
   const createPremiumCashew = async (productData) => {
     setLoading(true);
     try {
@@ -98,16 +97,15 @@ const PremiumCashewManager = () => {
         price: parseFloat(productData.price)
       };
 
-   const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
+      const response = await fetch(`${API_BASE_URL}/premium-cashews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-phone-number": getAdminPhone(),
         },
-        
         body: JSON.stringify(payload),
       });
-      console.log(getAdminPhone());
+      
       const data = await response.json();
       
       if (data.success) {
@@ -125,17 +123,23 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // PUT /api/premium-cashews/:id - Update product
+  // FIXED: Correct update function
   const updatePremiumCashew = async (id, productData) => {
     setLoading(true);
     try {
-    const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
+      const payload = {
+        name: productData.name,
+        size: productData.size,
+        price: parseFloat(productData.price)
+      };
+
+      const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "x-phone-number": getAdminPhone(),
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       
@@ -155,19 +159,23 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // DELETE /api/premium-cashews/:id - Delete product
   const deletePremiumCashew = async (id) => {
+    console.log("deletePremiumCashew called with id:", id);
     setLoading(true);
-    
     try {
- const response = await fetch(`${API_BASE_URL}/premium-cashews/${id}`, {
+      const url = `${API_BASE_URL}/premium-cashews/${id}`;
+      const phone = getAdminPhone();
+      console.log("Making DELETE request to:", url, "with phone:", phone);
+      
+      const response = await fetch(url, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "x-phone-number": getAdminPhone(),
+          "x-phone-number": phone,
         },
       });
       const data = await response.json();
+      console.log("Delete response:", data);
       
       if (data.success) {
         showMessage("success", "Product deleted successfully!");
@@ -183,7 +191,6 @@ const PremiumCashewManager = () => {
     }
   };
 
- 
   const getAllExportPremiumCashews = async () => {
     setLoading(true);
     try {
@@ -204,7 +211,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // GET /api/export-premium-cashews/:id - Get single export product by ID
   const getExportPremiumCashewById = async (id) => {
     setLoading(true);
     try {
@@ -217,7 +223,6 @@ const PremiumCashewManager = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Transform the data for the form
         const sizes = data.data.sizes.map(s => ({
           size: s.size,
           price: s.price.toString()
@@ -239,7 +244,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // POST /api/export-premium-cashews - Create new export product
   const createExportPremiumCashew = async (productData) => {
     setLoading(true);
     try {
@@ -251,7 +255,7 @@ const PremiumCashewManager = () => {
         })).filter(s => s.size && !isNaN(s.price))
       };
 
-     const response = await fetch(`${API_BASE_URL}/export-premium-cashews`, {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -277,7 +281,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // PUT /api/export-premium-cashews/:id - Update export product
   const updateExportPremiumCashew = async (id, productData) => {
     setLoading(true);
     try {
@@ -289,7 +292,7 @@ const PremiumCashewManager = () => {
         })).filter(s => s.size && !isNaN(s.price))
       };
 
-   const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -315,19 +318,23 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // DELETE /api/export-premium-cashews/:id - Delete export product
   const deleteExportPremiumCashew = async (id) => {
+    console.log("deleteExportPremiumCashew called with id:", id);
     setLoading(true);
-    
     try {
-  const response = await fetch(`${API_BASE_URL}/export-premium-cashews/${id}`, {
+      const url = `${API_BASE_URL}/export-premium-cashews/${id}`;
+      const phone = getAdminPhone();
+      console.log("Making DELETE request to:", url, "with phone:", phone);
+      
+      const response = await fetch(url, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "x-phone-number": getAdminPhone(),
+          "x-phone-number": phone,
         },
       });
       const data = await response.json();
+      console.log("Delete response:", data);
       
       if (data.success) {
         showMessage("success", "Export product deleted successfully!");
@@ -343,7 +350,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // Load products based on active tab
   useEffect(() => {
     if (activeTab === "manage") {
       getAllPremiumCashews();
@@ -352,7 +358,6 @@ const PremiumCashewManager = () => {
     }
   }, [activeTab]);
 
-  // Handle form submit for manage tab
   const handleManageSubmit = (e) => {
     e.preventDefault();
     
@@ -374,7 +379,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // Handle form submit for export tab
   const handleExportSubmit = (e) => {
     e.preventDefault();
     
@@ -401,7 +405,6 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // Handle adding new size field
   const addSizeField = () => {
     setExportFormData({
       ...exportFormData,
@@ -409,7 +412,6 @@ const PremiumCashewManager = () => {
     });
   };
 
-  // Handle removing size field
   const removeSizeField = (index) => {
     if (exportFormData.sizes.length > 1) {
       const newSizes = exportFormData.sizes.filter((_, i) => i !== index);
@@ -417,47 +419,59 @@ const PremiumCashewManager = () => {
     }
   };
 
-  // Handle size field change
   const handleSizeChange = (index, field, value) => {
     const newSizes = [...exportFormData.sizes];
     newSizes[index][field] = value;
     setExportFormData({ ...exportFormData, sizes: newSizes });
   };
 
-  // Handle edit button click for manage tab
+  // FIXED: This now calls the correct API endpoint
   const handleEdit = (product) => {
     getPremiumCashewById(product.id);
     if (window.innerWidth < 768) {
-      document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+      const form = document.querySelector('form');
+      if (form) form.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // Handle edit button click for export tab
   const handleExportEdit = (product) => {
-    // Use the first size's id for fetching details
     if (product.sizes && product.sizes.length > 0) {
-      getExportPremiumCashewById(product.sizes[0].id);
+      // Use product.ids[0] because export products are grouped, so product.id is undefined
+      // but product.ids contains the array of IDs (one per size)
+      const idToUse = product.id || (product.ids && product.ids[0]);
+      if (!idToUse) {
+        showMessage("error", "Product ID not found");
+        return;
+      }
+      getExportPremiumCashewById(idToUse);
     } else {
       showMessage("error", "No size found for this product");
     }
     if (window.innerWidth < 768) {
-      document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+      const form = document.querySelector('form');
+      if (form) form.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // Handle delete button click
   const handleDeleteClick = (id, type) => {
+    console.log("Delete clicked for:", { id, type });
     setDeleteConfirm({ show: true, id, type });
   };
 
   const handleConfirmDelete = () => {
+    console.log("Confirm delete called with deleteConfirm:", deleteConfirm);
     if (deleteConfirm.id) {
+      console.log("Proceeding with delete for:", deleteConfirm.type);
       if (deleteConfirm.type === "manage") {
+        console.log("Calling deletePremiumCashew with id:", deleteConfirm.id);
         deletePremiumCashew(deleteConfirm.id);
       } else {
+        console.log("Calling deleteExportPremiumCashew with id:", deleteConfirm.id);
         deleteExportPremiumCashew(deleteConfirm.id);
       }
       setDeleteConfirm({ show: false, id: null, type: null });
+    } else {
+      console.warn("No ID found in deleteConfirm:", deleteConfirm);
     }
   };
 
@@ -465,7 +479,6 @@ const PremiumCashewManager = () => {
     setDeleteConfirm({ show: false, id: null, type: null });
   };
 
-  // Handle cancel edit
   const handleCancelEdit = () => {
     if (activeTab === "manage") {
       setFormData({ name: "", size: "", price: "" });
@@ -829,7 +842,6 @@ const PremiumCashewManager = () => {
             </div>
           </form>
 
-          {/* Export Products List */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
               Export Products ({exportProducts.length})
@@ -868,7 +880,7 @@ const PremiumCashewManager = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(product.id, "export")}
+                          onClick={() => handleDeleteClick(product.id || (product.ids && product.ids[0]), "export")}
                           disabled={loading}
                           className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50 px-3 py-2"
                         >

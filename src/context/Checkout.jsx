@@ -19,11 +19,17 @@
     state: "Tamil Nadu", pincode: "", country: "India",
   };
 
-  const variants = {
-    hidden: { opacity: 0, x: 20 },
-    enter: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 120 } },
-    exit:  { opacity: 0, x: -20, transition: { type: "tween", duration: 0.2 } },
-  };
+const variants = {
+  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  enter: { 
+    opacity: 1, y: 0, scale: 1, 
+    transition: { type: "tween", duration: 0.25, ease: "easeOut" } 
+  },
+  exit: { 
+    opacity: 0, y: -8, scale: 0.98, 
+    transition: { type: "tween", duration: 0.15, ease: "easeIn" } 
+  },
+};
 
   
   // ── small reusable floating-label input ──────────────────────────────────────
@@ -260,8 +266,8 @@
 
           <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-            {/* ── LEFT: DELIVERY / PAYMENT ──────────────────────────────────── */}
-            <div className="w-full lg:w-7/12">
+         
+          <div className="w-full lg:w-7/12 overflow-hidden">
               <AnimatePresence mode="wait">
 
                 {/* ── DELIVERY STEP ────────────────────────────────────────── */}

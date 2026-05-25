@@ -111,7 +111,7 @@ const handleRemoveItem = (itemId, itemSize) => {
                     {/* Remove Button */}
                     <div className="md:col-span-1 text-center">
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
+                       onClick={() => handleRemoveItem(item.id, item.size)} 
                         className="text-red-500 hover:text-red-700"
                       >
                         <FaTrash />

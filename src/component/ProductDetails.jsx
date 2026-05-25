@@ -75,6 +75,7 @@ const ProductDetails = () => {
 
   // Handle Add to Cart
   const handleAddToCart = () => {
+     console.log("price type:", typeof currentPrice, currentPrice); 
     if (product?.sizes && product.sizes.length > 0 && !selectedSize) {
       setShowSizeError(true);
       setTimeout(() => setShowSizeError(false), 3000);
@@ -159,7 +160,7 @@ const ProductDetails = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
+            className="fixed top-15 left-4 right-4  sm:top-20 sm:left-auto sm:right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
           >
             <span className="text-lg">✓</span>
             <span>Item added to cart successfully!</span>

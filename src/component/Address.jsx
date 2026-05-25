@@ -24,6 +24,7 @@ const Address = () => {
   });
 
   const [orders] = useState([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Animation variants
   const containerVariants = {
@@ -147,34 +148,43 @@ const Address = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-50 py-8"
+      className="min-h-screen bg-gray-50 py-4 sm:py-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Header - Improved Mobile Responsive */}
         <motion.div
-          className="flex justify-between items-center mb-8"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8"
           variants={itemVariants}
         >
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center sm:text-left">
             {isAdmin ? "Admin Panel" : "My Account"}
           </h1>
 
-          <div className="flex items-center space-x-3">
-            {isAdmin ? (
-              <>
-                <button
-                  onClick={() => navigate("/admin/dashboard")}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
-                >
-                  Go to Admin Dashboard
-                </button>
+          {/* Mobile Menu Button - Only for Admin */}
+          {isAdmin && (
+            <div className="sm:hidden flex justify-end">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              >
+                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          )}
 
+          {/* Desktop Action Buttons */}
+          <div className={`${isAdmin ? 'hidden sm:flex' : 'flex'} items-center justify-center sm:justify-end space-x-3`}>
+            {isAdmin && (
+              <>
+              
                 <motion.button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base"
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
@@ -182,10 +192,11 @@ const Address = () => {
                   Logout
                 </motion.button>
               </>
-            ) : (
+            )}
+            {!isAdmin && (
               <motion.button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
@@ -194,18 +205,39 @@ const Address = () => {
               </motion.button>
             )}
           </div>
+
+          {/* Mobile Dropdown Menu for Admin */}
+          {isAdmin && isMobileMenuOpen && (
+            <motion.div
+              className="sm:hidden bg-white rounded-lg shadow-lg p-4 space-y-3"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+             
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Logout
+              </button>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Tabs (hidden for admins; show admin panel instead) */}
         {!isAdmin && (
           <motion.div
-            className="border-b border-gray-200 mb-8"
+            className="border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto"
             variants={itemVariants}
           >
-            <nav className="flex space-x-8">
+            <nav className="flex space-x-4 sm:space-x-8 min-w-max">
               <motion.button
                 onClick={() => setActiveTab("orders")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "orders"
                     ? "border-green-500 text-green-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -218,7 +250,7 @@ const Address = () => {
               </motion.button>
               <motion.button
                 onClick={() => setActiveTab("addresses")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "addresses"
                     ? "border-green-500 text-green-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -236,25 +268,24 @@ const Address = () => {
         {/* Content */}
         {isAdmin ? (
           <motion.div
-            className="bg-white rounded-lg shadow-md p-6 text-center"
+            className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center"
             variants={itemVariants}
           >
-            <h2 className="text-xl font-semibold mb-2">Administrator</h2>
-            <p className="text-gray-600 mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold mb-2">Administrator</h2>
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
               You are logged in as an admin. Use the admin dashboard to manage
               orders and products.
             </p>
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:space-x-4">
               <button
                 onClick={() => navigate("/admin/dashboard")}
-                className="px-5 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
+                className="w-full sm:w-auto px-5 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm sm:text-base"
               >
                 Open Admin Dashboard
               </button>
-
               <button
                 onClick={() => navigate("/dashboard")}
-                className="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                className="w-full sm:w-auto px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
               >
                 View User Dashboard
               </button>
@@ -262,7 +293,7 @@ const Address = () => {
           </motion.div>
         ) : (
           <motion.div
-            className="bg-white rounded-lg shadow-md p-6"
+            className="bg-white rounded-lg shadow-md p-4 sm:p-6"
             variants={itemVariants}
           >
             <AnimatePresence mode="wait">
@@ -277,13 +308,13 @@ const Address = () => {
                 >
                   {orders.length === 0 ? (
                     <motion.div
-                      className="py-12"
+                      className="py-8 sm:py-12"
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
                     >
                       <motion.svg
-                        className="mx-auto h-12 w-12 text-gray-400"
+                        className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -297,13 +328,13 @@ const Address = () => {
                         />
                       </motion.svg>
                       <motion.h3
-                        className="mt-4 text-lg font-medium text-gray-900"
+                        className="mt-4 text-base sm:text-lg font-medium text-gray-900"
                         variants={itemVariants}
                       >
                         You haven't placed any orders yet.
                       </motion.h3>
                       <motion.p
-                        className="mt-2 text-sm text-gray-500"
+                        className="mt-2 text-xs sm:text-sm text-gray-500"
                         variants={itemVariants}
                       >
                         Start shopping to see your orders here.
@@ -311,7 +342,7 @@ const Address = () => {
                       <motion.div className="mt-6" variants={itemVariants}>
                         <motion.button
                           onClick={handleContinueShopping}
-                          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                          className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
                           variants={buttonVariants}
                           whileHover="hover"
                           whileTap="tap"
@@ -322,7 +353,7 @@ const Address = () => {
                     </motion.div>
                   ) : (
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900">
                         Your Orders
                       </h3>
                     </div>
@@ -331,7 +362,7 @@ const Address = () => {
               ) : (
                 <motion.div
                   key="addresses"
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -339,21 +370,21 @@ const Address = () => {
                 >
                   {/* Left Side - Address List */}
                   <div>
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">
+                    <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
                       Saved Addresses
                     </h2>
 
                     <AnimatePresence>
                       {addresses.length === 0 && !showAddAddressForm ? (
                         <motion.div
-                          className="text-center py-8"
+                          className="text-center py-6 sm:py-8"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.3 }}
                         >
                           <motion.svg
-                            className="mx-auto h-12 w-12 text-gray-400"
+                            className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -374,12 +405,15 @@ const Address = () => {
                               d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                             />
                           </motion.svg>
-                          <h3 className="mt-4 text-lg font-medium text-gray-900">
-                            You haven't saved any addresses yet
+                          <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-medium text-gray-900">
+                            No saved addresses
                           </h3>
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                            Add your first address to get started
+                          </p>
                           <motion.button
                             onClick={() => setShowAddAddressForm(true)}
-                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
                             variants={buttonVariants}
                             whileHover="hover"
                             whileTap="tap"
@@ -389,7 +423,7 @@ const Address = () => {
                         </motion.div>
                       ) : (
                         <motion.div
-                          className="space-y-4"
+                          className="space-y-3 sm:space-y-4"
                           variants={containerVariants}
                           initial="hidden"
                           animate="visible"
@@ -398,7 +432,7 @@ const Address = () => {
                             {addresses.map((address, index) => (
                               <motion.div
                                 key={address.id}
-                                className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors"
+                                className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-green-300 transition-colors"
                                 variants={itemVariants}
                                 initial="hidden"
                                 animate="visible"
@@ -413,34 +447,34 @@ const Address = () => {
                                     animate={{ scale: 1 }}
                                     transition={{ delay: index * 0.1 }}
                                   >
-                                    Default address
+                                    Default
                                   </motion.span>
                                 )}
-                                <h4 className="font-medium text-gray-900">
+                                <h4 className="font-medium text-gray-900 text-sm sm:text-base">
                                   {address.firstName} {address.lastName}
                                 </h4>
-                                <p className="text-gray-600">
+                                <p className="text-gray-600 text-xs sm:text-sm">
                                   {address.address1}
                                 </p>
                                 {address.address2 && (
-                                  <p className="text-gray-600">
+                                  <p className="text-gray-600 text-xs sm:text-sm">
                                     {address.address2}
                                   </p>
                                 )}
-                                <p className="text-gray-600">
+                                <p className="text-gray-600 text-xs sm:text-sm">
                                   {address.zipCode} {address.city},{" "}
                                   {address.state}
                                 </p>
-                                <p className="text-gray-600">
+                                <p className="text-gray-600 text-xs sm:text-sm">
                                   {address.country}
                                 </p>
 
-                                <div className="mt-3 flex space-x-2">
+                                <div className="mt-3 flex flex-wrap gap-2">
                                   <motion.button
                                     onClick={() =>
                                       handleEditAddress(address.id)
                                     }
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                    className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm"
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                   >
@@ -450,7 +484,7 @@ const Address = () => {
                                     onClick={() =>
                                       handleDeleteAddress(address.id)
                                     }
-                                    className="text-red-600 hover:text-red-800 text-sm"
+                                    className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                   >
@@ -461,11 +495,11 @@ const Address = () => {
                                       onClick={() =>
                                         handleSetDefault(address.id)
                                       }
-                                      className="text-green-600 hover:text-green-800 text-sm"
+                                      className="text-green-600 hover:text-green-800 text-xs sm:text-sm"
                                       whileHover={{ scale: 1.1 }}
                                       whileTap={{ scale: 0.9 }}
                                     >
-                                      Set as Default
+                                      Set Default
                                     </motion.button>
                                   )}
                                 </div>
@@ -476,7 +510,7 @@ const Address = () => {
                           {!showAddAddressForm && (
                             <motion.button
                               onClick={() => setShowAddAddressForm(true)}
-                              className="w-full mt-4 px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-400 hover:text-green-600 transition-colors"
+                              className="w-full mt-3 sm:mt-4 px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-400 hover:text-green-600 transition-colors text-sm sm:text-base"
                               variants={buttonVariants}
                               whileHover="hover"
                               whileTap="tap"
@@ -498,23 +532,22 @@ const Address = () => {
                         exit={{ opacity: 0, x: 50 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <h2 className="text-lg font-medium text-gray-900 mb-4">
+                        <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
                           {formData.id ? "Edit Address" : "Add Address"}
                         </h2>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
                           Please fill in the information below:
                         </p>
 
                         <motion.form
                           onSubmit={handleAddAddress}
-                          className="space-y-4"
+                          className="space-y-3 sm:space-y-4"
                           variants={containerVariants}
                           initial="hidden"
                           animate="visible"
                         >
-                          {/* Form fields with animations */}
                           <motion.div
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
                             variants={itemVariants}
                           >
                             <div>
@@ -527,7 +560,7 @@ const Address = () => {
                                 value={formData.firstName}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                               />
                             </div>
                             <div>
@@ -540,22 +573,21 @@ const Address = () => {
                                 value={formData.lastName}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                               />
                             </div>
                           </motion.div>
 
-                          {/* Add other form fields here */}
                           <motion.div variants={itemVariants}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Company
+                              Company (Optional)
                             </label>
                             <input
                               type="text"
                               name="company"
                               value={formData.company}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                             />
                           </motion.div>
 
@@ -569,25 +601,25 @@ const Address = () => {
                               value={formData.address1}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                             />
                           </motion.div>
 
                           <motion.div variants={itemVariants}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Address Line 2
+                              Address Line 2 (Optional)
                             </label>
                             <input
                               type="text"
                               name="address2"
                               value={formData.address2}
                               onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                             />
                           </motion.div>
 
                           <motion.div
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
                             variants={itemVariants}
                           >
                             <div>
@@ -600,7 +632,7 @@ const Address = () => {
                                 value={formData.city}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                               />
                             </div>
                             <div>
@@ -613,7 +645,7 @@ const Address = () => {
                                 value={formData.state}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                               />
                             </div>
                           </motion.div>
@@ -628,7 +660,7 @@ const Address = () => {
                               value={formData.zipCode}
                               onChange={handleInputChange}
                               required
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
                             />
                           </motion.div>
 
@@ -649,17 +681,17 @@ const Address = () => {
                           </motion.div>
 
                           <motion.div
-                            className="flex space-x-3 pt-4"
+                            className="flex flex-col sm:flex-row gap-3 pt-4"
                             variants={itemVariants}
                           >
                             <motion.button
                               type="submit"
-                              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
                               variants={buttonVariants}
                               whileHover="hover"
                               whileTap="tap"
                             >
-                              Save
+                              Save Address
                             </motion.button>
                             <motion.button
                               type="button"
@@ -677,7 +709,7 @@ const Address = () => {
                                   isDefault: false,
                                 });
                               }}
-                              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm sm:text-base"
                               variants={buttonVariants}
                               whileHover="hover"
                               whileTap="tap"

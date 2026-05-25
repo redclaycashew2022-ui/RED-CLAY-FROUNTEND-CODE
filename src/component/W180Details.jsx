@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 const W180Details = ({ onClose }) => {
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [product, setProduct] = useState({
-    name: "W180 Cashew Nuts - King of Cashews",
+    name: "W180 Cashew Nuts - King of Cashewsuy",
     image: W180,
     category: "Whole White",
     description: "King of Cashews - Extra large size (180 nuts per pound)",
@@ -32,27 +32,23 @@ const W180Details = ({ onClose }) => {
     isNew: true,
   });
 
-  // Fetch product details from backend
-  useEffect(() => {
+useEffect(() => {
   const fetchProduct = async () => {
     try {
-       console.log("Fetching from:", `${API_BASE_URL}/export-premium-cashews`);
-      const response = await fetch(
-        `${API_BASE_URL}/export-premium-cashews`
-      );
+      const response = await fetch(`${API_BASE_URL}/export-premium-cashews`);
       const data = await response.json();
-      if (data.success && Array.isArray(data.data)) {
-        const found = data.data.find(p => p.name === product.name);  // ✅ match by name
-        if (found) {
-          setProduct(prev => ({
-            ...prev,
-            sizes: found.sizes.map((s) => ({
-              id: s.id,
-              label: s.size,      // ✅ s.size → label
-              price: s.price      // ✅ s.price → price
-            })),
-          }));
-        }
+      
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        const found = data.data[0]; 
+        
+        setProduct(prev => ({
+          ...prev,
+          sizes: found.sizes.map((s) => ({
+            id: s.id,
+            label: s.size,
+            price: s.price,
+          })),
+        }));
       }
     } catch (err) {
       console.error("Failed to fetch product:", err);

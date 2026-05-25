@@ -6,9 +6,16 @@
 //   "http://localhost:5000/api"
 
 
-export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+// export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
 // const API_BASE_URL = "http://localhost:5000/api"; 
 // const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://red-clay-backend.onrender.com/api";
+  
+// export const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 // Helper function for API calls
 const apiRequest = async (endpoint, options = {}) => {
@@ -33,19 +40,40 @@ const apiRequest = async (endpoint, options = {}) => {
     },
   };
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.groupCollapsed(`API Request: ${config.method || "GET"} ${url}`);
+  console.log("Request config:", config);
 
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Something went wrong" }));
-      throw new Error(error.message || "Request failed");
+  try {
+    const response = await fetch(url, config);
+    const responseText = await response.text();
+    let responseBody = null;
+
+    try {
+      responseBody = responseText ? JSON.parse(responseText) : null;
+    } catch (parseError) {
+      responseBody = responseText;
+      console.warn("Failed to parse JSON response:", parseError);
     }
 
-    return await response.json();
+    console.log("Response:", {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      body: responseBody,
+    });
+    console.groupEnd();
+
+    if (!response.ok) {
+      const errorMessage =
+        responseBody?.message || `Request failed with status ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    return responseBody;
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
+    console.groupEnd();
     throw error;
   }
 };
