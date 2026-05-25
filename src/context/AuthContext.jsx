@@ -16,10 +16,10 @@ export const AuthProvider = ({ children }) => {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
-  "http://localhost:5000";
+  "https://red-clay-backend.onrender.com";
 
   // Admin configuration — store numbers as 10-digit strings (no country code)
-  const ADMIN_PHONES = ["8754201900"]; // Add admin phone numbers (10-digit format)
+  const ADMIN_PHONES = ["8754201900", "9159668932"]; // Add admin phone numbers (10-digit format)
 
   useEffect(() => {
     const initializeAuth = () => {
