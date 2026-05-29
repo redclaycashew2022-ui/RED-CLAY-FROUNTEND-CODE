@@ -45,13 +45,17 @@ const handleRemoveItem = (itemId, itemSize) => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 md:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Your Cart</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">Your Cart</h1>
         
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 sm:gap-10">
           {/* Cart Items Section */}
           <div className="lg:w-2/3">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="hidden md:grid grid-cols-12 gap-4 bg-gray-100 p-4 font-semibold text-gray-600">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-white rounded-lg shadow-md overflow-hidden"
+            >
+              <div className="hidden md:grid grid-cols-12 gap-4 bg-gray-100 p-4 sm:p-5 font-bold text-gray-700 text-sm">
                 <div className="col-span-5">Product</div>
                 <div className="col-span-2 text-center">Price</div>
                 <div className="col-span-3 text-center">Quantity</div>
@@ -120,7 +124,7 @@ const handleRemoveItem = (itemId, itemSize) => {
                   </div>
                 </div>
               ))}
-            </div>
+            </motion.div>
           </div>
           
           {/* Order Summary Section */}

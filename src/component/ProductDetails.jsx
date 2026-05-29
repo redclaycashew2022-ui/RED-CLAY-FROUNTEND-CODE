@@ -157,12 +157,16 @@ const ProductDetails = () => {
       <AnimatePresence>
         {showSuccessMessage && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-15 left-4 right-4  sm:top-20 sm:left-auto sm:right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            className="fixed top-15 left-4 right-4 sm:top-20 sm:left-auto sm:right-4 z-50 bg-gradient-to-r from-green-400 to-green-500 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 text-sm sm:text-base font-semibold backdrop-blur-sm"
           >
-            <span className="text-lg">✓</span>
+            <motion.span 
+              className="text-lg"
+              animate={{ rotate: [0, 20, 0] }}
+              transition={{ duration: 0.5 }}
+            >✓</motion.span>
             <span>Item added to cart successfully!</span>
           </motion.div>
         )}
@@ -172,45 +176,46 @@ const ProductDetails = () => {
       <AnimatePresence>
         {showSizeError && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-50 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-50 bg-gradient-to-r from-red-400 to-red-500 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 text-sm sm:text-base font-semibold backdrop-blur-sm"
           >
-            <span className="text-lg">⚠️</span>
+            <motion.span 
+              className="text-lg"
+              animate={{ shake: [0, -2, 2, -2, 0] }}
+              transition={{ duration: 0.5 }}
+            >⚠️</motion.span>
             <span>Please select a size!</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Back Button - Mobile Optimized */}
-      <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 lg:hidden">
-        <button
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-gray-100 lg:hidden shadow-sm"
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-[#2E8B57] transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-[#2E8B57] transition-colors font-medium"
         >
           <FaChevronLeft className="w-4 h-4" />
           <span className="text-sm">Back</span>
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-      className="max-w-7xl mx-auto bg-white px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 lg:pt-14 pb-6"
+        className="max-w-7xl mx-auto bg-white px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-14"
       >
-          <div className="w-full mb-4 px-1">
-    <button
-      onClick={() => navigate(-1)}
-      className="flex items-center gap-2 text-gray-600 hover:text-[#2E8B57] transition-colors text-sm sm:text-base"
-    >
-      <FaChevronLeft className="w-4 h-4" />
-      Back
-    </button>
-  </div>
         {/* Main Product Section */}
-      <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-16">
           {/* LEFT SIDE - Image Gallery - Mobile Optimized */}
           <div className="w-full lg:w-1/2">
             <motion.div
@@ -221,14 +226,30 @@ const ProductDetails = () => {
             >
               {/* Main Image */}
               <div 
-                className="cursor-zoom-in relative"
+                className="cursor-zoom-in relative group"
                 onClick={() => setIsImageZoomed(true)}
               >
-                <img
+                <motion.img
                   src={productImages[activeImageIndex] || product.image_url || product.image_url1 || "https://via.placeholder.com/600"}
                   alt={product.name}
                   className="w-full h-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] object-contain p-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  key={activeImageIndex}
                 />
+                <motion.div 
+                  className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center"
+                  whileHover={{ opacity: 1 }}
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-white text-2xl"
+                  >
+                    🔍
+                  </motion.div>
+                </motion.div>
               </div>
 
               {/* Thumbnail Navigation - Mobile Optimized */}
@@ -256,8 +277,8 @@ const ProductDetails = () => {
             </motion.div>
           </div>
 
-          {/* RIGHT SIDE - Product Details - Mobile Optimized */}
-     <div className="w-full lg:w-1/2 flex justify-center lg:justify-start">
+        {/* RIGHT SIDE - Product Details - Mobile Optimized */}
+        <div className="w-full lg:w-1/2 flex justify-start">
             <motion.div
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -265,9 +286,9 @@ const ProductDetails = () => {
               className="lg:sticky lg:top-24"
             >
               {/* Product Name - Mobile Optimized */}
-           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 leading-snug mt-2 lg:mt-0">
-                {product.name}
-              </h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+            {product.name}
+          </h1>
 
               {/* Rating Section */}
               <div className="flex items-center gap-2 mb-4">
@@ -414,15 +435,15 @@ const ProductDetails = () => {
 
               {/* Action Buttons - Mobile Optimized */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-white py-4 border-t border-gray-100 lg:relative lg:border-0 lg:py-0"
+                className="flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-gradient-to-t from-white via-white to-white/80 py-4 px-4 -mx-4 border-t border-gray-100 lg:relative lg:border-0 lg:py-0 lg:px-0 lg:mx-0 lg:bg-transparent"
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1 bg-[#2E8B57] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#1a6b3a] transition-colors text-base flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(46, 139, 87, 0.3)" }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 bg-gradient-to-r from-[#2E8B57] to-[#1a6b3a] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-xl transition-all text-base flex items-center justify-center gap-2 shadow-lg"
                   onClick={handleAddToCart}
                   disabled={!product.stock || product.stock <= 0}
                 >
@@ -430,9 +451,9 @@ const ProductDetails = () => {
                   {product.stock && product.stock > 0 ? "Add to Cart" : "Out of Stock"}
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex-1 bg-[#C1440E] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#9a360b] transition-colors text-base flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(193, 68, 14, 0.3)" }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 bg-gradient-to-r from-[#C1440E] to-[#9a360b] text-white px-6 py-3 rounded-lg font-semibold hover:shadow-xl transition-all text-base flex items-center justify-center gap-2 shadow-lg"
                   onClick={handleBuyNow}
                   disabled={!product.stock || product.stock <= 0}
                 >

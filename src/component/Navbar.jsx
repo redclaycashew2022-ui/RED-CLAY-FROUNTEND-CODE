@@ -493,9 +493,6 @@ const Navbar = () => {
                     Products
                   </button>
                 </div>
-                <NavLink to="/contact" className={({ isActive }) => isActive ? "text-[#C1440E] border-b-2 border-[#C1440E] pb-1" : "text-[#2C2C2C] hover:text-[#C1440E] text-sm md:text-base font-medium transition duration-300"}>
-                  Contact us
-                </NavLink>
               </div>
               
               <div className="flex items-center space-x-6">
@@ -616,10 +613,6 @@ const Navbar = () => {
               
               <NavLink to="/about" className={({ isActive }) => isActive ? "text-[#C1440E] font-medium py-3 border-b border-[#C1440E]" : "text-[#2C2C2C] hover:text-[#C1440E] text-lg font-medium py-3 border-b border-gray-100"} onClick={() => setIsMobileMenuOpen(false)}>
                 About
-              </NavLink>
-              
-              <NavLink to="/contact" className={({ isActive }) => isActive ? "text-[#C1440E] font-medium py-3 border-b border-[#C1440E]" : "text-[#2C2C2C] hover:text-[#C1440E] text-lg font-medium py-3 border-b border-gray-100"} onClick={() => setIsMobileMenuOpen(false)}>
-                Contact
               </NavLink>
               
               <div className="pt-3 pb-2">

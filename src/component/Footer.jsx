@@ -14,20 +14,20 @@ import { NavLink } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#2E8B57] text-white pt-12 pb-6">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* About Us */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 border-b-2 border-white/20 pb-2">
-              Red Clay Cashews
-            </h3>
-            <p className="mb-4">
-              Premium cashews grown in the mineral-rich red soils of Panruti,
-              Tamil Nadu. Handpicked and traditionally processed for the best
-              quality and flavor.
-            </p>
-            <div className="flex space-x-4">
+    <footer className="bg-[#2E8B57] text-white pt-12 sm:pt-16 pb-8 sm:pb-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
+        {/* About Us */}
+        <div>
+          <h3 className="text-lg sm:text-xl font-bold mb-4 border-b-2 border-white/20 pb-3">
+            Red Clay Cashews
+          </h3>
+          <p className="text-sm sm:text-base mb-4 leading-relaxed">
+            Premium cashews grown in the mineral-rich red soils of Panruti,
+            Tamil Nadu. Handpicked and traditionally processed for the best
+            quality and flavor.
+          </p>
+          <div className="flex space-x-4">
               <a
                 href="https://www.facebook.com/RedClayCashews"
                 target="_blank"
@@ -55,12 +55,12 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 border-b-2 border-white/20 pb-2">
-              Quick Links
-            </h3>
-            <ul className="space-y-2">
+        {/* Quick Links */}
+        <div>
+          <h3 className="text-lg sm:text-xl font-bold mb-4 border-b-2 border-white/20 pb-3">
+            Quick Links
+          </h3>
+          <ul className="space-y-3 text-sm sm:text-base">
               <li>
                 <NavLink
                   to="/home"
@@ -97,18 +97,7 @@ const Footer = () => {
                   About Us
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/contact"
-                  className={({ isActive }) =>
-                    `hover:text-[#C1440E] transition-colors ${
-                      isActive ? "text-[#C1440E]" : ""
-                    }`
-                  }
-                >
-                  Contact Us
-                </NavLink>
-              </li>
+
               <li>
                 <NavLink
                   to="/cart"
@@ -125,29 +114,29 @@ const Footer = () => {
           </div>
 
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 border-b-2 border-white/20 pb-2">
-              Contact Us
-            </h3>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <FaMapMarkerAlt className="mt-1 mr-2 flex-shrink-0" />
-                <span>
-                  Panruti, Cuddalore District
-                  <br />
-                  Tamil Nadu, India
-                </span>
-              </li>
-              <li className="flex items-center">
-                <FaPhone className="mr-2" />
-                <a
-                  href="tel:+919876543210"
-                  className="hover:text-[#C1440E] transition-colors"
-                >
-                  +91 9080605735
-                </a>
-              </li>
+        {/* Contact Info */}
+        <div>
+          <h3 className="text-lg sm:text-xl font-bold mb-4 border-b-2 border-white/20 pb-3">
+            Contact Us
+          </h3>
+          <ul className="space-y-3 text-sm sm:text-base">
+            <li className="flex items-start gap-2">
+              <FaMapMarkerAlt className="mt-1 flex-shrink-0" />
+              <span className="leading-relaxed">
+                Panruti, Cuddalore District
+                <br />
+                Tamil Nadu, India
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <FaPhone className="flex-shrink-0" />
+              <a
+                href="tel:+919080605735"
+                className="hover:text-[#C1440E] transition-colors"
+              >
+                +91 9080605735
+              </a>
+            </li>
               <li className="flex items-center">
                 <FaEnvelope className="mr-2" />
                 <a

@@ -1,7 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
+
+// All Indian states
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
 
 const Address = () => {
   const navigate = useNavigate();
@@ -10,21 +19,32 @@ const Address = () => {
 
   const [activeTab, setActiveTab] = useState("orders");
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] = useState(() => {
+    // Load addresses from localStorage on mount
+    const saved = localStorage.getItem("userAddresses");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [editingAddressId, setEditingAddressId] = useState(null);
   const [formData, setFormData] = useState({
+    id: "",
     firstName: "",
     lastName: "",
     company: "",
     address1: "",
     address2: "",
     city: "",
-    state: "",
+    state: "Tamil Nadu",
     zipCode: "",
     isDefault: false,
   });
 
   const [orders] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Persist addresses to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("userAddresses", JSON.stringify(addresses));
+  }, [addresses]);
 
   // Animation variants
   const containerVariants = {
@@ -83,27 +103,53 @@ const Address = () => {
 
   const handleAddAddress = (e) => {
     e.preventDefault();
-    const newAddress = {
-      id: Date.now(),
-      ...formData,
-      country: "India",
-    };
-
-    if (formData.isDefault) {
+    
+    if (editingAddressId) {
+      // Update existing address
       setAddresses((prev) =>
-        prev.map((addr) => ({ ...addr, isDefault: false }))
+        prev.map((addr) => {
+          if (addr.id === editingAddressId) {
+            return {
+              ...addr,
+              ...formData,
+              isDefault: formData.isDefault ? true : (addresses.length === 1 ? true : addr.isDefault),
+            };
+          }
+          // Remove isDefault from other addresses if this one is set as default
+          if (formData.isDefault) {
+            return { ...addr, isDefault: false };
+          }
+          return addr;
+        })
       );
+      setEditingAddressId(null);
+    } else {
+      // Add new address
+      const newAddress = {
+        id: Date.now(),
+        ...formData,
+        country: "India",
+      };
+
+      if (formData.isDefault) {
+        setAddresses((prev) =>
+          prev.map((addr) => ({ ...addr, isDefault: false }))
+        );
+      }
+
+      setAddresses((prev) => [...prev, newAddress]);
     }
 
-    setAddresses((prev) => [...prev, newAddress]);
+    // Reset form
     setFormData({
+      id: "",
       firstName: "",
       lastName: "",
       company: "",
       address1: "",
       address2: "",
       city: "",
-      state: "",
+      state: "Tamil Nadu",
       zipCode: "",
       isDefault: false,
     });
@@ -113,9 +159,20 @@ const Address = () => {
   const handleEditAddress = (id) => {
     const addressToEdit = addresses.find((addr) => addr.id === id);
     if (addressToEdit) {
-      setFormData(addressToEdit);
+      setFormData({
+        id: addressToEdit.id,
+        firstName: addressToEdit.firstName,
+        lastName: addressToEdit.lastName,
+        company: addressToEdit.company,
+        address1: addressToEdit.address1,
+        address2: addressToEdit.address2,
+        city: addressToEdit.city,
+        state: addressToEdit.state || "Tamil Nadu",
+        zipCode: addressToEdit.zipCode,
+        isDefault: addressToEdit.isDefault,
+      });
+      setEditingAddressId(id);
       setShowAddAddressForm(true);
-      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
     }
   };
 
@@ -148,7 +205,7 @@ const Address = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-50 py-4 sm:py-8"
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 lg:px-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -156,10 +213,10 @@ const Address = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header - Improved Mobile Responsive */}
         <motion.div
-          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 sm:mb-10"
           variants={itemVariants}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center sm:text-left">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 text-center sm:text-left">
             {isAdmin ? "Admin Panel" : "My Account"}
           </h1>
 
@@ -181,10 +238,9 @@ const Address = () => {
           <div className={`${isAdmin ? 'hidden sm:flex' : 'flex'} items-center justify-center sm:justify-end space-x-3`}>
             {isAdmin && (
               <>
-              
                 <motion.button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base"
+                  className="px-5 sm:px-6 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base font-medium shadow-sm"
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
@@ -196,7 +252,7 @@ const Address = () => {
             {!isAdmin && (
               <motion.button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base"
+                className="px-5 sm:px-6 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base font-medium shadow-sm"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap="tap"
@@ -231,16 +287,16 @@ const Address = () => {
         {/* Tabs (hidden for admins; show admin panel instead) */}
         {!isAdmin && (
           <motion.div
-            className="border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto"
+            className="border-b border-gray-200 mb-8 sm:mb-10 overflow-x-auto"
             variants={itemVariants}
           >
-            <nav className="flex space-x-4 sm:space-x-8 min-w-max">
+            <nav className="flex space-x-6 sm:space-x-8 min-w-max">
               <motion.button
                 onClick={() => setActiveTab("orders")}
-                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-1 border-b-2 font-semibold text-sm sm:text-base transition-all ${
                   activeTab === "orders"
-                    ? "border-green-500 text-green-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-green-600 text-green-700"
+                    : "border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300"
                 }`}
                 variants={tabVariants}
                 whileHover={{ scale: 1.05 }}
@@ -250,10 +306,10 @@ const Address = () => {
               </motion.button>
               <motion.button
                 onClick={() => setActiveTab("addresses")}
-                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-3 sm:py-4 px-1 border-b-2 font-semibold text-sm sm:text-base transition-all ${
                   activeTab === "addresses"
-                    ? "border-green-500 text-green-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-green-600 text-green-700"
+                    : "border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300"
                 }`}
                 variants={tabVariants}
                 whileHover={{ scale: 1.05 }}
@@ -268,15 +324,15 @@ const Address = () => {
         {/* Content */}
         {isAdmin ? (
           <motion.div
-            className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center"
+            className="bg-white rounded-lg shadow-md p-6 sm:p-8 text-center"
             variants={itemVariants}
           >
-            <h2 className="text-lg sm:text-xl font-semibold mb-2">Administrator</h2>
-            <p className="text-gray-600 mb-4 text-sm sm:text-base">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2">Administrator</h2>
+            <p className="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
               You are logged in as an admin. Use the admin dashboard to manage
               orders and products.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <button
                 onClick={() => navigate("/admin/dashboard")}
                 className="w-full sm:w-auto px-5 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm sm:text-base"
@@ -370,7 +426,7 @@ const Address = () => {
                 >
                   {/* Left Side - Address List */}
                   <div>
-                    <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
+<h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-6 sm:mb-8">
                       Saved Addresses
                     </h2>
 
@@ -532,8 +588,8 @@ const Address = () => {
                         exit={{ opacity: 0, x: 50 }}
                         transition={{ duration: 0.4 }}
                       >
-                        <h2 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
-                          {formData.id ? "Edit Address" : "Add Address"}
+                        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                          {editingAddressId ? "Edit Address" : "Add Address"}
                         </h2>
                         <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
                           Please fill in the information below:
@@ -639,14 +695,20 @@ const Address = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 State *
                               </label>
-                              <input
-                                type="text"
+                              <select
                                 name="state"
                                 value={formData.state}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base"
-                              />
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base bg-white"
+                              >
+                                <option value="">Select a state</option>
+                                {INDIAN_STATES.map((state) => (
+                                  <option key={state} value={state}>
+                                    {state}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </motion.div>
 
@@ -697,14 +759,16 @@ const Address = () => {
                               type="button"
                               onClick={() => {
                                 setShowAddAddressForm(false);
+                                setEditingAddressId(null);
                                 setFormData({
+                                  id: "",
                                   firstName: "",
                                   lastName: "",
                                   company: "",
                                   address1: "",
                                   address2: "",
                                   city: "",
-                                  state: "",
+                                  state: "Tamil Nadu",
                                   zipCode: "",
                                   isDefault: false,
                                 });

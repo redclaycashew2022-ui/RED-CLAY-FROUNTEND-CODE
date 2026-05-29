@@ -230,7 +230,7 @@ const variants = {
     };
 
     // ── whatsapp order ─────────────────────────────────────────────────────────
-    const handleWhatsAppOrder = () => {
+    const handleWhatsAppOrder = async () => {
       const addr = savedAddresses.find((a) => a.id === selectedAddressId);
       const itemsText = finalItems
         .map((i) => `${i.name} (${i.size}) - ${i.quantity} x ₹${i.price}`)
@@ -240,9 +240,50 @@ const variants = {
         ? `Customer: ${addr.first_name} ${addr.last_name}%0APhone: ${addr.phone}%0AAddress: ${addr.address}, ${addr.city}, ${addr.state} - ${addr.pincode}`
         : "";
       const msg = `New Order Request:%0A%0A${itemsText}%0A%0A${totalText}%0A%0A${addrText}`;
+      
+      // Save order to backend
+      await saveOrder(addr);
+      
       window.open(`https://wa.me/918754201900?text=${msg}`, "_blank");
       clearCart();
       navigate("/order-confirmation", { state: { paymentMethod: "whatsapp" } });
+    };
+
+    // ── save order to backend ──────────────────────────────────────────────────
+    const saveOrder = async (deliveryAddress) => {
+      try {
+        const phone = localStorage.getItem("phoneNumber") || localStorage.getItem("phone");
+        const orderData = {
+          phone: phone,
+          items: finalItems.map((item) => ({
+            name: item.name,
+            size: item.size,
+            quantity: item.quantity,
+            price: Number(item.price),
+          })),
+          total: grandTotal,
+          address: deliveryAddress,
+          status: "pending",
+          payment_method: paymentMethod,
+        };
+
+        const response = await fetch(`${API_BASE_URL}/orders`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(orderData),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to save order", response.statusText);
+        } else {
+          console.log("Order saved successfully");
+        }
+      } catch (err) {
+        console.error("Error saving order:", err);
+      }
     };
 
     const handleBackToStore = () => {
@@ -459,7 +500,12 @@ const variants = {
                       ) : (
                         <button
                           disabled={!paymentMethod}
-                          onClick={() => { clearCart(); navigate("/order-confirmation"); }}
+                          onClick={async () => {
+                            const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+                            await saveOrder(addr);
+                            clearCart();
+                            navigate("/order-confirmation");
+                          }}
                           className={`flex-[2] py-4 rounded-xl font-bold text-sm shadow-lg transition-all
                             ${paymentMethod
                               ? "bg-[#C1440E] text-white hover:bg-[#a3390c]"

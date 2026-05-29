@@ -563,7 +563,7 @@ const About = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={goToLogin} // Added onClick handler
+              onClick={() => window.location.href = 'mailto:info@redclaycashews.com'}
               className="border-2 border-white text-white px-8 py-3 font-semibold rounded-full transition-all hover:bg-white hover:text-amber-900"
             >
               Contact Us
