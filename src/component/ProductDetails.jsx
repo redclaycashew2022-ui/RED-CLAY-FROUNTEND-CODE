@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { productApi } from "../services/api";
+import { productApi, resolveImageUrl } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext"; 
@@ -40,7 +40,9 @@ const ProductDetails = () => {
     product?.image_url1,
     product?.image_url2,
     product?.image_url3,
-  ].filter(img => img);
+  ]
+    .filter((img) => img)
+    .map((img) => resolveImageUrl(img));
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -75,6 +77,7 @@ const ProductDetails = () => {
 
   // Handle Add to Cart
   const handleAddToCart = () => {
+     console.log("price type:", typeof currentPrice, currentPrice); 
     if (product?.sizes && product.sizes.length > 0 && !selectedSize) {
       setShowSizeError(true);
       setTimeout(() => setShowSizeError(false), 3000);
@@ -84,7 +87,7 @@ const ProductDetails = () => {
     const cartItem = {
       id: product.id,
       name: product.name,
-      image: product.image_url || product.image_url1 || product.image,
+      image: resolveImageUrl(product.image_url || product.image_url1) || product.image,
       price: currentPrice,
       totalPrice: totalPrice,
       size: selectedSize?.size || product.size || "250g",
@@ -109,7 +112,7 @@ const ProductDetails = () => {
     const cartItem = {
       id: product.id,
       name: product.name,
-      image: product.image_url || product.image_url1 || product.image,
+      image: resolveImageUrl(product.image_url || product.image_url1) || product.image,
       price: currentPrice,
       size: selectedSize?.size || "250g",
       quantity: quantity,
@@ -159,7 +162,7 @@ const ProductDetails = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
+            className="fixed top-15 left-4 right-4  sm:top-20 sm:left-auto sm:right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm sm:text-base"
           >
             <span className="text-lg">✓</span>
             <span>Item added to cart successfully!</span>
@@ -224,7 +227,7 @@ const ProductDetails = () => {
                 onClick={() => setIsImageZoomed(true)}
               >
                 <img
-                  src={productImages[activeImageIndex] || product.image_url || product.image_url1 || "https://via.placeholder.com/600"}
+                  src={productImages[activeImageIndex] || resolveImageUrl(product.image_url || product.image_url1) || "https://via.placeholder.com/600"}
                   alt={product.name}
                   className="w-full h-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] object-contain p-4"
                 />
@@ -465,9 +468,9 @@ const ProductDetails = () => {
                   }
                 >
                   <img
-                    src={item.image_url || item.image_url1}
+                    src={resolveImageUrl(item.image_url || item.image_url1)}
                     alt={item.name}
-                    className="w-24 h-24 sm:w-28 sm:h-28 object-contain mb-2 rounded"
+                    className="w-24 h-24 sm:w-28 sm:h-28 object-cover mb-2 rounded-lg"
                   />
                   <div className="font-semibold text-xs sm:text-sm text-center mb-2 line-clamp-2">
                     {item.name}
@@ -508,7 +511,7 @@ const ProductDetails = () => {
             </button>
             <div className="w-full h-full flex items-center justify-center p-4">
               <img
-                src={productImages[activeImageIndex] || product.image_url}
+                src={productImages[activeImageIndex] || resolveImageUrl(product.image_url)}
                 alt={product.name}
                 className="max-h-full max-w-full object-contain"
               />

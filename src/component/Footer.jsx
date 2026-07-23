@@ -87,18 +87,6 @@ const Footer = () => {
               </li>
               <li>
                 <NavLink
-                  to="/about"
-                  className={({ isActive }) =>
-                    `hover:text-[#C1440E] transition-colors ${
-                      isActive ? "text-[#C1440E]" : ""
-                    }`
-                  }
-                >
-                  About Us
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
                   to="/contact"
                   className={({ isActive }) =>
                     `hover:text-[#C1440E] transition-colors ${

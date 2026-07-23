@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { API_BASE_URL } from "../services/api";
+import { API_BASE_URL, productApi } from "../services/api";
 
-import fruitImage from "../images/fruit.png";
-import image1 from "../images/image1.png";
 import W180 from "../wwimages/W180.png";
 import W210 from "../wwimages/W210.png";
 import W240 from "../wwimages/W240.png";
@@ -40,8 +38,50 @@ import RawcashewDetails from "./RawCashewDetails";
 import HoneyCashewDetails from "./HoneyCashewDetails";
 
 import morecashew from "../images/morecashew.jpg";
+import coverImage from "../images/coverimage.png";
+import container4View from "../images/4container.png";
+import giftBasketImage from "../images/giftbasket.png";
+import bigBox1kgImage from "../images/big box1kg.png";
+import container2Short from "../images/2containerwithshort.png";
+import container4Long from "../images/4conatinerwithlong.png";
 import HomeLayout from "./HomeLayout";
 import { useCart } from "../context/CartContext";
+
+import celebHero from "../images/celebration.png";
+import celebHamper from "../images/hamper.png";
+import celebDryFruits from "../images/dryfruits.jpg";
+import celebRawHoney from "../images/Raw honey with Nuts.jpg";
+import celebTwoConSmall from "../images/twoconsmall.png";
+import celebFruitsNutsChoc from "../images/Fruits and NutsChocolate.jpg";
+import celebMixed from "../images/mixed.png";
+import celebGiftChat from "../images/giftchat.png";
+import celebTwoWindowBox from "../images/twowindowbox.png";
+import celebSmallBox from "../images/smallbox.png";
+import celebLaddu from "../images/laddu.png";
+
+
+const celebrationGalleryImages = [
+  { id: "hero", src: celebHero, alt: "Festive Dry Fruit Gifting", filter: { firstMainCategory: "Gifts", belowAll: true } },
+  { id: "hamper", src: celebHamper, alt: "Premium Gift Hamper", filter: { firstSubcategory: "Dry Fruit Gifting", belowAll: true } },
+  { id: "dryfruits", src: celebDryFruits, alt: "Assorted Dry Fruits", filter: { firstSubcategory: "Mixed Dry Fruits", belowMainCategories: ["Fruits"] } },
+  { id: "rawhoney", src: celebRawHoney, alt: "Raw Honey with Nuts", filter: { firstSubcategory: "Honey Mixed Nuts", belowMainCategories: ["HoneyDryFruits"] } },
+  { id: "twoconsmall", src: celebTwoConSmall, alt: "Premium Storage Jars", filter: { firstSubcategory: "2containersmall seeds", belowMainCategories: ["Seeds"] } },
+  { id: "fruitschoc", src: celebFruitsNutsChoc, alt: "Fruit & Nut Chocolate", filter: { belowMainCategories: ["HealthySnacks"] } },
+  { id: "mixed", src: celebMixed, alt: "Signature Mixed Dry Fruits", filter: { showAll: true } },
+  { id: "giftchat", src: celebGiftChat, alt: "Festive Jar Trio", filter: { belowMainCategories: ["Gifts"] } },
+  { id: "twowindowbox", src: celebTwoWindowBox, alt: "Window Gift Box", filter: { firstSubcategory: "2containerlong", belowMainCategories: ["Seeds"] } },
+  { id: "smallbox", src: celebSmallBox, alt: "Compact Nut Boxes", filter: { firstSubcategory: "smallbox4Window", belowMainCategories: ["Seeds", "Nuts"] } },
+  { id: "laddu", src: celebLaddu, alt: "Dry Fruit Laddus", filter: { firstSubcategory: "Dry Fruit Laddu", belowMainCategories: ["HealthySnacks"] } },
+];
+
+const celebrationCollection = [
+  { id: "cover", name: "From Nature's Best to Your Table", image: coverImage, homepageCollection: "Nature's Best" },
+  { id: "container4", name: "Premium 2-Layer 4-View Dry Fruit Container", image: container4View, homepageCollection: "Premium 4-View Container" },
+  { id: "giftbasket", name: "Premium Nuts, Seeds & Gift Hampers", image: giftBasketImage, homepageCollection: "Gift Hampers" },
+  { id: "bigbox1kg", name: "Royal Dry Fruit Combo Container", image: bigBox1kgImage, homepageCollection: "Royal Combo" },
+  { id: "container2short", name: "Deluxe 2-Tier Dry Fruit Collection", image: container2Short, homepageCollection: "2-Tier Collection" },
+  { id: "container4long", name: "Signature 4-Compartment Dry Fruit Gift Box", image: container4Long, homepageCollection: "4-Compartment Box" },
+];
 
 const Home = () => {
   const navigate = useNavigate();
@@ -65,8 +105,82 @@ const Home = () => {
   const [honeyCashew, setHoneyCashew] = useState(null);
   const [apiProducts, setApiProducts] = useState([]);
   const [loadingProductId, setLoadingProductId] = useState(null);
+  const [loadingCollectionId, setLoadingCollectionId] = useState(null);
+  const [featuredGalleryId, setFeaturedGalleryId] = useState("hero");
+  const [loadingGalleryId, setLoadingGalleryId] = useState(null);
 
-  // Function to fetch product details from API
+
+  const handleCollectionClick = async (item) => {
+    setLoadingCollectionId(item.id);
+    try {
+      const result = await productApi.getByHomepageCollection(item.homepageCollection);
+      navigate("/products", {
+        state: {
+          products: Array.isArray(result) ? result : [],
+          subcategory: item.homepageCollection,
+          fromCollection: true,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching homepage collection products:", error);
+      navigate("/products", {
+        state: { subcategory: item.homepageCollection, fromCollection: true },
+      });
+    } finally {
+      setLoadingCollectionId(null);
+    }
+  };
+
+  // Exact-match filtering (not substring) so lookalike values like
+  // "2containerlong" vs "2containerlong seeds" don't bleed into each other.
+  const fetchGalleryProducts = async (filter = {}) => {
+    const all = await productApi.getAll();
+    const list = Array.isArray(all) ? all : [];
+    if (filter.showAll) return list;
+
+    let firstTier = [];
+    if (filter.firstSubcategory) {
+      firstTier = list.filter(
+        (p) => (p.subcategory || "").trim() === filter.firstSubcategory
+      );
+    } else if (filter.firstMainCategory) {
+      firstTier = list.filter(
+        (p) => (p.maincategory || "").trim() === filter.firstMainCategory
+      );
+    }
+
+    let belowTier = [];
+    if (filter.belowAll) {
+      belowTier = list;
+    } else if (filter.belowMainCategories?.length) {
+      belowTier = list.filter((p) =>
+        filter.belowMainCategories.includes((p.maincategory || "").trim())
+      );
+    }
+
+    const firstIds = new Set(firstTier.map((p) => p.id));
+    return [...firstTier, ...belowTier.filter((p) => !firstIds.has(p.id))];
+  };
+
+  const handleGalleryClick = async (item) => {
+    setLoadingGalleryId(item.id);
+    try {
+      const result = await fetchGalleryProducts(item.filter);
+      navigate("/products", {
+        state: {
+          products: result,
+          subcategory: item.filter?.firstSubcategory || item.filter?.firstMainCategory || null,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching gallery products:", error);
+      navigate("/products");
+    } finally {
+      setLoadingGalleryId(null);
+    }
+  };
+
+
   const fetchProductDetails = async (productName) => {
     try {
       const encodedName = encodeURIComponent(productName);
@@ -83,12 +197,12 @@ const Home = () => {
     }
   };
 
-  // Handle Buy button click with API call
+  
   const handleBuyClick = async (product) => {
     setLoadingProductId(product.id);
     
     try {
-      // Map product name to API expected name format
+      
       let apiProductName = "";
       
       switch(product.grade) {
@@ -143,21 +257,24 @@ const Home = () => {
         default:
           apiProductName = product.name;
       }
-      
-      // Fetch product details from API
+
       const apiProductData = await fetchProductDetails(apiProductName);
-      
-      // Prepare product data for navigation
+
+
+      const absoluteImage = product.image.startsWith("http")
+        ? product.image
+        : `${window.location.origin}${product.image}`;
+
       const productData = {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: absoluteImage,
         grade: product.grade,
         description: product.description,
-        image_url: product.image,
-        image_url1: product.image,
-        // Use sizes from API if available, otherwise use default
+        image_url: absoluteImage,
+        image_url1: absoluteImage,
+
         sizes: apiProductData && apiProductData.sizes ? apiProductData.sizes : [{
           size: "250g",
           price: product.price,
@@ -167,20 +284,23 @@ const Home = () => {
         pt: null
       };
       
-      // Navigate to product details page with product data
+
       navigate("/productdetails", { state: { product: productData } });
     } catch (error) {
       console.error("Error in buy click:", error);
-      // Fallback to default product data
+ 
+      const absoluteImage = product.image.startsWith("http")
+        ? product.image
+        : `${window.location.origin}${product.image}`;
       const productData = {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: absoluteImage,
         grade: product.grade,
         description: product.description,
-        image_url: product.image,
-        image_url1: product.image,
+        image_url: absoluteImage,
+        image_url1: absoluteImage,
         sizes: [{
           size: "250g",
           price: product.price,
@@ -196,7 +316,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (showW180Details || showW210Details || showW240Details || showW320Details || 
+    if (showW180Details || showW210Details || showW240Details || showW320Details ||
         showW450Details || wSplitDetails || cashewlwpDetails || spCashew || 
         roastedDetails || saltedCashew || bormaCashew || greenChili || bbcashew || 
         blockPepper || rawCashew || honeyCashew) {
@@ -217,6 +337,7 @@ const Home = () => {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.25 } },
   };
+
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
@@ -225,6 +346,7 @@ const Home = () => {
       transition: { duration: 0.6, ease: "easeOut" },
     },
   };
+
   const imageLeftVariants = {
     hidden: { opacity: 0, x: -80 },
     visible: {
@@ -233,6 +355,7 @@ const Home = () => {
       transition: { duration: 0.7, ease: "easeOut" },
     },
   };
+
   const imageRightVariants = {
     hidden: { opacity: 0, x: 80 },
     visible: {
@@ -425,271 +548,209 @@ console.log("API PRODUCTS 👉", data.data);
 ];
 
   return (
-    <main className="bg-[#FAF9F6] pt-5">
-      {/* Banner Section */}
-      <div className="relative w-full h-[500px] md:h-[700px] overflow-hidden">
+    <main className="bg-[#FAF9F6] overflow-x-hidden">
+
+      <div className="relative w-full h-[280px] sm:h-[400px] md:h-[700px] mt-0 overflow-hidden bg-[#FAF9F6]">
         <motion.img
           src={morecashew}
           alt="Cashew background"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover block"
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 3, ease: "easeOut" }}
         />
-        <div className="absolute inset-0 bg-black/40"></div>
 
-        <div className="relative h-full flex items-center justify-center">
-          <motion.div
-            className="text-center text-white px-4 max-w-4xl"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-          >
-            <motion.h1
-              className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.8 }}
-            >
-              Welcome the Healthy
-              <br />
-              and Tasty
-              <br />
-              <span className="text-[#FFD700]">Cashews!</span>
-            </motion.h1>
 
+       <div className="relative h-full flex items-center">
+  <motion.div
+    className="text-left text-white px-10 md:px-10 max-w-4xl"
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 1, delay: 0.5 }}
+  >
+          
             <motion.div
               className="flex justify-center mt-8"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 1.5 }}
             >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate("/products")}
-                className="bg-[#2E8B57] hover:bg-[#C1440E] text-white px-8 py-4 rounded-full font-semibold shadow-lg text-lg"
-              >
-                Shop Now
-              </motion.button>
+              
             </motion.div>
           </motion.div>
         </div>
       </div>
 
-      <HomeLayout />
-
-      {/* From Red Clay Section */}
-      <section className="px-5 py-1 sm:px-7 lg:px-10">
-        <motion.div
-          className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8"
-          initial="hidden"
-          whileInView="visible"
-          variants={containerVariants}
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          <motion.img
-            src={fruitImage}
-            alt="Cashew fruit"
-            className="w-full md:w-1/2 rounded-xl shadow-lg border-4 border-[#C1440E]/20"
-            variants={imageLeftVariants}
-          />
-          <motion.div
-            className="w-full md:w-1/2 space-y-4"
-            variants={containerVariants}
+      {/* Elevate Every Celebration Section */}
+      <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            className="text-[clamp(0.65rem,2.8vw,1.5rem)] sm:text-xl md:text-3xl font-bold text-[#2E8B57] text-left mb-8 md:mb-10 whitespace-nowrap"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            <motion.h1
-              className="text-3xl lg:text-4xl font-bold text-[#2E8B57]"
-              variants={itemVariants}
-            >
-              🏺 From Red Clay to Premium Cashews
-            </motion.h1>
-            <motion.p
-              className="text-lg text-[#2C2C2C]"
-              variants={itemVariants}
-            >
-              Grown in the mineral-rich red soils of Panruti, Tamil Nadu, our
-              cashew apples are handpicked at peak ripeness, ensuring natural
-              sweetness and optimal nut quality. Panruti is not just a place —
-              it's a legacy. Known across India as one of the most famous cashew
-              processing hubs, Panruti is where premium quality begins.
-            </motion.p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="mt-6 bg-[#2E8B57] hover:bg-[#C1440E] text-white px-8 py-3 rounded-full font-medium shadow-lg"
-              variants={itemVariants}
-            >
-              Discover Our Clay-to-Jar Process
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      </section>
+            Elevate Every Celebration with Premium Dry Fruits
+          </motion.h2>
 
-      {/* Pure Goodness Section */}
-      <section className="px-5 py-12 bg-[#F5F5F0]">
-        <motion.div
-          className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10"
-          initial="hidden"
-          whileInView="visible"
-          variants={containerVariants}
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          <motion.div
-            className="w-full md:w-1/2 order-2 md:order-1 space-y-6"
-            variants={containerVariants}
-          >
-            <motion.h1
-              className="text-3xl lg:text-4xl font-bold text-[#C1440E]"
-              variants={itemVariants}
-            >
-              Pure Goodness in Every Bite
-            </motion.h1>
-            <motion.p
-              className="text-lg text-[#2C2C2C]"
-              variants={itemVariants}
-            >
-              At Red Clay Cashews, we bring you the finest handpicked cashews,
-              processed using traditional, hygienic methods to preserve their
-              natural taste, nutrients, and crunch. What you see here is not
-              just a bowl of cashews — it's a promise of purity, freshness, and
-              quality. Unlike mass-produced nuts stored for months, our cashews
-              are freshly processed and packed straight from the farm. Enjoy the
-              real, unadulterated flavor in every bite.
-            </motion.p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="mt-6 bg-[#C1440E] hover:bg-[#2E8B57] text-white px-8 py-3 rounded-full font-medium shadow-lg"
-              variants={itemVariants}
-            >
-              Taste The Difference
-            </motion.button>
-          </motion.div>
-          <motion.img
-            src={image1}
-            alt="Premium quality cashews"
-            className="w-full md:w-1/2 object-cover rounded-xl shadow-lg border-4 border-[#2E8B57]/20"
-            variants={imageRightVariants}
-          />
-        </motion.div>
-      </section>
-
-      {/* Products Section */}
-      <section className="py-16 bg-white">
-        <motion.h2
-          className="text-3xl font-bold text-center text-[#2E8B57] mb-8"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          Our Premium Cashew Selection
-        </motion.h2>
-        <div className="overflow-x-auto pb-18">
-          <div className="flex space-x-6 w-max px-4">
-         {products.map((product) => {
-  const apiMatch = apiProducts.find(
-    (item) =>
-      item.name.trim().toLowerCase() ===
-      product.name.trim().toLowerCase()
-  );
- console.log("LOCAL apiName:", product.apiName);
-  console.log("API names available:", apiProducts.map(p => p.name));
-  console.log("MATCH:", apiMatch);
-              return (
-                <motion.div
-                  key={product.id}
-                  className="bg-[#FAF9F6] rounded-3xl shadow-lg overflow-hidden border-2 border-[#b5deca] flex-shrink-0"
-                  style={{ width: "250px" }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            {celebrationCollection.map((item) => (
+              <motion.div
+                key={item.id}
+                className="flex-shrink-0 snap-start w-[62%] sm:w-[36%] group cursor-pointer"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => handleCollectionClick(item)}
+              >
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-gray-200 bg-white">
                   <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-contain p-4"
+                    src={item.image}
+                    alt={item.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold">{product.name}</h3>
-                    <p className="text-[#580707] font-semibold">
-  {apiMatch
-    ? `${parseFloat(apiMatch.price)}₹ / ${apiMatch.size}`
-    : `${product.price}₹ / 250g`}
-</p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {product.description}
-                    </p>
-                    <div className="mt-4 flex gap-3 w-full">
-                      {/* BUY BUTTON */}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex-1 h-11 rounded-2xl 
-                          bg-[#2E8B57] hover:bg-[#1a6b3a]
-                          text-white font-semibold text-sm sm:text-base
-                          shadow-md transition-all duration-200
-                          flex items-center justify-center gap-1
-                          disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => handleBuyClick(product)}
-                        disabled={loadingProductId === product.id}
-                      >
-                        {loadingProductId === product.id ? (
-                          <>
-                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Loading...</span>
-                          </>
-                        ) : (
-                          <span>Buy</span>
-                        )}
-                      </motion.button>
-
-                      {/* EXPLORE BUTTON */}
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex-1 h-11 rounded-2xl 
-                          bg-[#C1440E] hover:bg-[#9a360b]
-                          text-white font-semibold text-sm sm:text-base
-                          shadow-md transition-all duration-200
-                          flex items-center justify-center gap-1"
-                        onClick={() => {
-                          if (product.grade === "W180") setShowW180Details(product);
-                          if (product.grade === "W210") setShowW210Details(product);
-                          if (product.grade === "W240") setShowW240Details(product);
-                          if (product.grade === "W320") setShowW320Details(product);
-                          if (product.grade === "W450") setShowW450Details(product);
-                          if (product.grade === "WSplit") setWSplitDetails(product);
-                          if (product.grade === "LWP") setLwpDetails(product);
-                          if (product.grade === "BB") setBbcashew(product);
-                          if (product.grade === "SP") setSpcashew(product);
-                          if (product.grade === "Roasted") setRoastedDetails(product);
-                          if (product.grade === "Salted") setSaltedCashew(product);
-                          if (product.grade === "BormaC") setBormaCashew(product);
-                          if (product.grade === "GreenChiliC") setGreenChili(product);
-                          if (product.grade === "BlockPepper") setBlockPepper(product);
-                          if (product.grade === "RawC") setRawCashew(product);
-                          if (product.grade === "HoneyC") setHoneyCashew(product);
-                        }}
-                      >
-                        <span>Explore</span>
-                      </motion.button>
+                  {loadingCollectionId === item.id && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+                  )}
+                </div>
+                <div className="mt-3 px-3 py-2 rounded-lg border border-gray-200 bg-white">
+                  <h3
+                    className="text-[#2C2C2C] text-xs sm:text-base md:text-lg font-bold truncate"
+                    title={item.name}
+                  >
+                    {item.name}
+                  </h3>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* <HomeLayout /> */}
+
+      {/* Discover Our Premium Cashew Collection Section */}
+      <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            className="text-[clamp(0.7rem,3.7vw,1.5rem)] sm:text-3xl md:text-4xl font-bold text-[#2E8B57] text-left mb-10 md:mb-12 whitespace-nowrap"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            Discover Our Premium Cashew Collection
+          </motion.h2>
+
+          <div className="flex gap-5 md:gap-7 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            {products.map((product) => (
+              <motion.div
+                key={product.id}
+                className="flex-shrink-0 snap-start w-[45%] sm:w-[32%] md:w-[24%] lg:w-[20%] xl:w-[15%] group cursor-pointer"
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => handleBuyClick(product)}
+              >
+                <div className="relative aspect-square rounded-2xl overflow-hidden shadow-md group-hover:shadow-xl border border-gray-100 bg-white transition-shadow duration-300">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                </div>
+                <p className="mt-3 text-center text-[#2C2C2C] text-sm sm:text-base font-semibold truncate">
+                  {product.name}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Celebrations Gallery Section */}
+      <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 lg:h-[420px]">
+            {/* Featured image */}
+            <div className="lg:w-[40%] h-[260px] sm:h-[360px] lg:h-full">
+              {(() => {
+                const featured = celebrationGalleryImages.find(
+                  (img) => img.id === featuredGalleryId
+                );
+                return (
+                  <motion.div
+                    layoutId={`celeb-${featured.id}`}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    onClick={() => handleGalleryClick(featured)}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative w-full h-full rounded-xl overflow-hidden shadow-xl border border-gray-100 bg-white cursor-pointer"
+                  >
+                    <img
+                      src={featured.src}
+                      alt={featured.alt}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {loadingGalleryId === featured.id && (
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })()}
+            </div>
+
+            {/* Thumbnail grid */}
+            <div className="lg:w-[70%] grid grid-cols-2 sm:grid-cols-5 lg:grid-rows-2 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 lg:h-full">
+              {celebrationGalleryImages
+                .filter((img) => img.id !== featuredGalleryId)
+                .map((img) => (
+                  <motion.div
+                    key={img.id}
+                    layoutId={`celeb-${img.id}`}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    onClick={() => {
+                      setFeaturedGalleryId(img.id);
+                      handleGalleryClick(img);
+                    }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="relative rounded-xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 cursor-pointer bg-white aspect-square lg:aspect-auto lg:h-full transition-shadow duration-300"
+                  >
+                    <img
+                      src={img.src}
+                      alt={img.alt}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    {loadingGalleryId === img.id && (
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+     
       {/* From Farm to Table Section */}
       <section className="py-16 bg-[#F5F5F0]">
         <motion.h2
-          className="text-3xl font-bold text-center mb-12"
+          className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-12 whitespace-nowrap px-2"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -722,7 +783,7 @@ console.log("API PRODUCTS 👉", data.data);
       {/* Testimonials Section */}
       <section className="py-16 bg-white">
         <motion.h2
-          className="text-3xl font-bold text-center mb-12"
+          className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-12 whitespace-nowrap px-2"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -762,7 +823,7 @@ console.log("API PRODUCTS 👉", data.data);
           <span className="inline-block px-4 py-1 bg-white rounded-full mb-4 font-bold shadow-sm">
             Limited Time
           </span>
-          <h2 className="text-3xl font-bold mb-4">Monsoon Harvest Special</h2>
+          <h2 className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold mb-4 whitespace-nowrap">Monsoon Harvest Special</h2>
           <p className="text-lg mb-6">
             Fresh batch just arrived from our Panruti farms
           </p>
@@ -778,7 +839,7 @@ console.log("API PRODUCTS 👉", data.data);
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/about")}
+              onClick={() => navigate("/contact")}
               className="border-2 border-emerald-600 text-emerald-600 px-8 py-3 rounded-full font-bold"
             >
               Learn More

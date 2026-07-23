@@ -93,7 +93,7 @@ const cashewVarieties = [
 
 ];
 
-// Product list for search filtering
+
 const productsList = [
   { id: 1, name: "Whole White-180", grade: "W180", category: "cashew" },
   { id: 2, name: "Whole White-210", grade: "W210", category: "cashew" },
@@ -123,12 +123,11 @@ const Navbar = () => {
   const [showCartPreview, setShowCartPreview] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
-  const [showMarquee, setShowMarquee] = useState(true);
+  
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
-  const lastScrollY = useRef(window.scrollY);
+
   const searchRef = useRef(null);
   
   const navigate = useNavigate();
@@ -295,23 +294,15 @@ const Navbar = () => {
     };
   }, [charIndex, isTyping, placeholderIndex, searchValue]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 10);
-      setShowScrollToTop(scrollY > 300);
-      if (scrollY > lastScrollY.current) {
-        setShowMarquee(false);
-      } else {
-        setShowMarquee(true);
-      }
-      lastScrollY.current = scrollY;
-    };
-    
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollY = window.scrollY;
+    setIsScrolled(scrollY > 10);
+    setShowScrollToTop(scrollY > 300);
+  };
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -342,9 +333,13 @@ const Navbar = () => {
   }, [showCartPreview]);
 
   const mainCategories = [
-    { label: "Seeds", value: "seeds" },
-    { label: "Nuts", value: "nuts" },
-    { label: "Fruits", value: "fruits" },
+        { label: "Dry Fruits", value: "Fruits" },
+
+    { label: "Nuts", value: "Nuts" },
+   { label: "Seeds", value: "Seeds" },
+    { label: "Gifts ", value: "Gifts" },
+     { label: "Healthy Snacks ", value: "HealthySnacks" },
+    { label: "Honey Dry Fruits", value: "HoneyDryFruits" },
   ];
 
   const handleProductsClick = async () => {
@@ -372,18 +367,16 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 w-full z-[9999]">
-        {showMarquee && (
-          <div className="bg-gradient-to-r from-[#2E8B57] to-[#C1440E] text-white">
-            <div className="animate-marquee whitespace-nowrap py-4 text-sm font-medium">
-              {[...Array(5)].map((_, i) => (
-                <span key={i} className="inline-block px-4">
-                  {cashewMessages}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+<div className="w-full z-50">
+       <div className="bg-gradient-to-r from-[#2E8B57] to-[#C1440E] text-white overflow-hidden">
+    <div className="animate-marquee whitespace-nowrap py-4 text-sm font-medium w-max">
+      {[...Array(5)].map((_, i) => (
+        <span key={i} className="inline-block px-4">
+          {cashewMessages}
+        </span>
+      ))}
+    </div>
+  </div>
         
         <nav className={`bg-gradient-to-r from-green-300 via-yellow-200 to-red-50 text-white py-2 shadow-sm transition-all duration-300 ${isScrolled ? "shadow-md" : "shadow-sm"}`}>
           
@@ -393,7 +386,10 @@ const Navbar = () => {
               {isMobileMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
             </button>
             
-            <div className="flex items-center justify-center flex-1">
+            <div
+              className="flex items-center justify-center flex-1 cursor-pointer"
+              onClick={() => navigate("/")}
+            >
               <img src={logo} alt="Red Clay Cashews Logo" className="h-12 w-auto" />
             </div>
             
@@ -474,16 +470,16 @@ const Navbar = () => {
           {/* Desktop Navbar */}
           <div className="hidden md:block container mx-auto">
             <div className="flex justify-between items-center px-4 py-2">
-              <div className="flex items-center">
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={() => navigate("/")}
+              >
                 <img src={logo} alt="Red Clay Cashews Logo" className="h-10 md:h-12 lg:h-14 w-auto" />
               </div>
               
               <div className="flex space-x-6 lg:space-x-8 mx-6">
                 <NavLink to="/home" className={({ isActive }) => isActive ? "text-[#C1440E] border-b-2 border-[#C1440E] pb-1" : "text-[#2C2C2C] hover:text-[#C1440E] text-sm md:text-base font-medium transition duration-300"}>
                   Home
-                </NavLink>
-                <NavLink to="/about" className={({ isActive }) => isActive ? "text-[#C1440E] border-b-2 border-[#C1440E] pb-1" : "text-[#2C2C2C] hover:text-[#C1440E] text-sm md:text-base font-medium transition duration-300"}>
-                  About us
                 </NavLink>
                 <div className="relative group">
                   <button
@@ -492,6 +488,26 @@ const Navbar = () => {
                   >
                     Products
                   </button>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[160px]">
+                      {mainCategories.map((cat) => (
+                        <button
+                          key={cat.value}
+                          onClick={async () => {
+                            try {
+                              const result = await productApi.getByMainCategory(cat.value);
+                              navigate("/products", { state: { products: result, mainCategory: cat.value } });
+                            } catch (err) {
+                              navigate("/products");
+                            }
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-[#2C2C2C] hover:text-[#C1440E] hover:bg-green-50 transition-colors"
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <NavLink to="/contact" className={({ isActive }) => isActive ? "text-[#C1440E] border-b-2 border-[#C1440E] pb-1" : "text-[#2C2C2C] hover:text-[#C1440E] text-sm md:text-base font-medium transition duration-300"}>
                   Contact us
@@ -560,7 +576,7 @@ const Navbar = () => {
                   )}
                   
                  <button 
-  onClick={() => navigate("/cart")}  // 👈 CHANGE THIS
+  onClick={() => navigate("/cart")}  
   className="relative"
   aria-label="Cart"
 >
@@ -614,9 +630,6 @@ const Navbar = () => {
                 </div>
               </div>
               
-              <NavLink to="/about" className={({ isActive }) => isActive ? "text-[#C1440E] font-medium py-3 border-b border-[#C1440E]" : "text-[#2C2C2C] hover:text-[#C1440E] text-lg font-medium py-3 border-b border-gray-100"} onClick={() => setIsMobileMenuOpen(false)}>
-                About
-              </NavLink>
               
               <NavLink to="/contact" className={({ isActive }) => isActive ? "text-[#C1440E] font-medium py-3 border-b border-[#C1440E]" : "text-[#2C2C2C] hover:text-[#C1440E] text-lg font-medium py-3 border-b border-gray-100"} onClick={() => setIsMobileMenuOpen(false)}>
                 Contact
@@ -658,7 +671,6 @@ const Navbar = () => {
         <FaArrowUp className="w-5 h-5" />
       </button>
       
-      <div className="pt-[160px] md:pt-[110px]"></div>
     </>
   );
 };

@@ -12,11 +12,11 @@ import ProductDetail from "./component/ProductDetail";
 import Products from "./component/Products";
 import { CartProvider } from "./context/CartContext";
 import Cart from "./context/Cart";
-import About from "./component/About";
 import ScrollToTop from "./component/ScrollToTop";
 import Checkout from "./context/Checkout";
 import LoginWithOTP from "./component/LoginWithOTP";
 import Address from "./component/Address";
+import Contact from "./component/Contact";
 import AdminDashboard from "./admin/AdminDashboard";
 import OrderConfirmation from "./component/OrderConfirmation";
 import CreateOrder from "./admin/CreateOrder";
@@ -24,9 +24,11 @@ import CreateOrder from "./admin/CreateOrder";
 // Import AuthProvider and ProtectedRoute
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./component/ProtectedRoute";
-import ProductList from "./admin/ProductList.jsx";
+import ProductList from "./admin/components/ProductList.jsx";
 import ProductDetails from "./component/ProductDetails.jsx";
+import UserDashboard from "./component/UserDashboard.jsx";
 import PremiumCashewManager from "./admin/PremiumCashewManager.jsx";
+import ViewUsers from "./admin/ViewUsers.jsx";
 
 function App() {
   return (
@@ -60,9 +62,8 @@ function RouteLayout() {
           <Route path="/products/:productId?" element={<Products />} />
           <Route path="/product/:productId" element={<ProductDetail />} />
           <Route path="/productdetails" element={<ProductDetails />} />
-         
-          <Route path="/about" element={<About />} />
           <Route path="/login" element={<LoginWithOTP />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Protected Routes (Require Login) */}
           <Route
@@ -106,10 +107,7 @@ function RouteLayout() {
             path="/dashboard"
             element={
               <ProtectedRoute allowedRoles={["user", "admin"]}>
-                <div className="container mx-auto p-8">
-                  <h1 className="text-3xl font-bold">User Dashboard</h1>
-                  {/* User dashboard content */}
-                </div>
+                <UserDashboard />
               </ProtectedRoute>
             }
           />
@@ -125,14 +123,14 @@ function RouteLayout() {
           />
 
           {/* Order Management Route */}
-          <Route
+          {/* <Route
             path="/admin/orders"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <CreateOrder />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
           {/* Product Management Route */}
           <Route
@@ -156,6 +154,16 @@ function RouteLayout() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <PremiumCashewManager />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* View Users Route */}
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ViewUsers />
               </ProtectedRoute>
             }
           />

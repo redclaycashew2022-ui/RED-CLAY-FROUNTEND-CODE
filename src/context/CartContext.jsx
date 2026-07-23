@@ -17,7 +17,8 @@ export const CartProvider = ({ children }) => {
 
   // ✅ Add to Cart
   const addToCart = (item) => {
-    if (!item.id || !item.name || typeof item.price !== "number") {
+    const parsedPrice = parseFloat(item.price);
+ if (!item.id || !item.name || isNaN(parsedPrice)) {
       console.error("Invalid cart item:", item);
       return;
     }
@@ -26,7 +27,7 @@ export const CartProvider = ({ children }) => {
       id: item.id,
       name: item.name,
       image: item.image || "/placeholder-image.jpg",
-      price: item.price,
+       price: parsedPrice,    
       size: typeof item.size === "string" ? item.size : "N/A",
       quantity: Number.isInteger(item.quantity) ? item.quantity : 1,
     };

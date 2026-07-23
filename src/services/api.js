@@ -6,9 +6,36 @@
 //   "http://localhost:5000/api"
 
 
-export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+// export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
 // const API_BASE_URL = "http://localhost:5000/api"; 
 // const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://red-clay-backend.onrender.com/api";
+
+// export const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
+// Origin of the backend server (strips trailing "/api"), used to resolve
+// image paths like "/uploadimage/foo.jpg" that the backend returns.
+// Do NOT use window.location.origin for this — in dev that's the Vite
+// frontend (5173), not the backend (5000), so images would 404.
+export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+
+// Turns a relative path returned by the backend into a full, loadable URL.
+export const resolveImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+
+// Inverse of resolveImageUrl: strips the backend origin so only the
+// relative path (e.g. "/uploadimage/foo.jpg") is stored in the DB.
+export const toRelativeImagePath = (url) => {
+  if (!url) return null;
+  return url.startsWith(API_ORIGIN) ? url.slice(API_ORIGIN.length) : url;
+};
 
 // Helper function for API calls
 const apiRequest = async (endpoint, options = {}) => {
@@ -33,19 +60,40 @@ const apiRequest = async (endpoint, options = {}) => {
     },
   };
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.groupCollapsed(`API Request: ${config.method || "GET"} ${url}`);
+  console.log("Request config:", config);
 
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: "Something went wrong" }));
-      throw new Error(error.message || "Request failed");
+  try {
+    const response = await fetch(url, config);
+    const responseText = await response.text();
+    let responseBody = null;
+
+    try {
+      responseBody = responseText ? JSON.parse(responseText) : null;
+    } catch (parseError) {
+      responseBody = responseText;
+      console.warn("Failed to parse JSON response:", parseError);
     }
 
-    return await response.json();
+    console.log("Response:", {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      body: responseBody,
+    });
+    console.groupEnd();
+
+    if (!response.ok) {
+      const errorMessage =
+        responseBody?.message || `Request failed with status ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    return responseBody;
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
+    console.groupEnd();
     throw error;
   }
 };
@@ -57,6 +105,16 @@ export const productApi = {
     apiRequest("/products/by-subcategory", {
       method: "POST",
       body: JSON.stringify({ value: "subcategory", data: subcategory }),
+    }),
+
+  // Get products by homepage collection (the 6 homepage banner cards)
+  getByHomepageCollection: (homepageCollection) =>
+    apiRequest("/products/by-homepage-collection", {
+      method: "POST",
+      body: JSON.stringify({
+        value: "homepage_collection",
+        data: homepageCollection,
+      }),
     }),
 
   // Get all products (POST with payload for explicit intent)
@@ -158,12 +216,7 @@ export const uploadImage = async (file) => {
     }
 
     // Prefer fullUrl when provided by the server
-    let imageUrl = data.fullUrl || data.url;
-    if (!imageUrl.startsWith("http")) {
-      imageUrl = `${window.location.origin}${
-        imageUrl.startsWith("/") ? "" : "/"
-      }${imageUrl}`;
-    }
+    const imageUrl = resolveImageUrl(data.fullUrl || data.url);
 
     return { url: imageUrl, relative: data.url };
   } catch (error) {
@@ -187,6 +240,52 @@ export const categoryApi = {
     );
     return response.json();
   },
+};
+
+// Order APIs
+export const orderApi = {
+  getByPhone: (phone) => apiRequest(`/orders/user/${phone}`),
+  updateStatus: (id, status) =>
+    apiRequest(`/orders/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// Payment APIs (Razorpay)
+export const paymentApi = {
+  createOrder: (amount) =>
+    apiRequest("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+
+  verifyPayment: (payload) =>
+    apiRequest("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+};
+
+// Contact APIs
+export const contactApi = {
+  submit: (data) =>
+    apiRequest("/contact", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getAll: () => apiRequest("/contact"),
+
+  delete: (id) =>
+    apiRequest(`/contact/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+// Admin Dashboard Stats API
+export const adminApi = {
+  getStats: () => apiRequest("/admin/stats"),
 };
 
 // Auth APIs (for completeness)

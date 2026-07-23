@@ -10,9 +10,13 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Base URL for your backend - SIMPLIFIED VERSION
-  const API_BASE_URL = "https://red-clay-backend.onrender.com"; 
-  // const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+  // Base URL for your backend - local development
+  // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  // const API_BASE_URL = "https://red-clay-backend.onrender.com"; 
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
+  "http://localhost:5000";
 
   // Admin configuration — store numbers as 10-digit strings (no country code)
   const ADMIN_PHONES = ["8754201900"]; // Add admin phone numbers (10-digit format)

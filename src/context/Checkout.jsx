@@ -3,7 +3,16 @@
   import { useNavigate } from "react-router-dom";
   import { motion, AnimatePresence } from "framer-motion";
   import { useLocation } from "react-router-dom";
-  import { API_BASE_URL } from "../services/api";
+  import { API_BASE_URL, paymentApi } from "../services/api";
+
+  const FALLBACK_IMAGE =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+        <rect width="64" height="64" fill="#f3f4f6"/>
+        <text x="32" y="36" font-size="9" text-anchor="middle" fill="#9ca3af" font-family="sans-serif">No Image</text>
+      </svg>`
+    );
 
   const indianStates = [
     "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
@@ -15,15 +24,21 @@
 
   const emptyForm = {
     first_name: "", last_name: "", phone: "",
-    address: "", apartment: "", city: "",
+    address: "", city: "",
     state: "Tamil Nadu", pincode: "", country: "India",
   };
 
-  const variants = {
-    hidden: { opacity: 0, x: 20 },
-    enter: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 120 } },
-    exit:  { opacity: 0, x: -20, transition: { type: "tween", duration: 0.2 } },
-  };
+const variants = {
+  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  enter: { 
+    opacity: 1, y: 0, scale: 1, 
+    transition: { type: "tween", duration: 0.25, ease: "easeOut" } 
+  },
+  exit: { 
+    opacity: 0, y: -8, scale: 0.98, 
+    transition: { type: "tween", duration: 0.15, ease: "easeIn" } 
+  },
+};
 
   
   // ── small reusable floating-label input ──────────────────────────────────────
@@ -61,7 +76,6 @@
         </div>
         <Field label="Phone Number" name="phone"     value={form.phone}     onChange={handleChange} />
         <Field label="Address"      name="address"   value={form.address}   onChange={handleChange} />
-        <Field label="Apartment / Suite" name="apartment" value={form.apartment} onChange={handleChange} />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="City"    name="city"    value={form.city}    onChange={handleChange} />
           <Field label="State"   name="state"   value={form.state}   onChange={handleChange} list="states-list" />
@@ -111,7 +125,7 @@
 
     // payment / step
     const [step,           setStep]           = useState("delivery");
-    const [paymentMethod,  setPaymentMethod]  = useState(null);
+    const [placingOrder,   setPlacingOrder]   = useState(false);
 
     // totals
     const subtotal   = finalItems.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
@@ -223,20 +237,81 @@
       setStep("payment");
     };
 
-    // ── whatsapp order ─────────────────────────────────────────────────────────
-    const handleWhatsAppOrder = () => {
-      const addr = savedAddresses.find((a) => a.id === selectedAddressId);
-      const itemsText = finalItems
-        .map((i) => `${i.name} (${i.size}) - ${i.quantity} x ₹${i.price}`)
-        .join("%0A");
-      const totalText = `Total: ₹${grandTotal.toFixed(2)}`;
-      const addrText  = addr
-        ? `Customer: ${addr.first_name} ${addr.last_name}%0APhone: ${addr.phone}%0AAddress: ${addr.address}, ${addr.city}, ${addr.state} - ${addr.pincode}`
-        : "";
-      const msg = `New Order Request:%0A%0A${itemsText}%0A%0A${totalText}%0A%0A${addrText}`;
-      window.open(`https://wa.me/918754201900?text=${msg}`, "_blank");
-      clearCart();
-      navigate("/order-confirmation", { state: { paymentMethod: "whatsapp" } });
+    // ── online (razorpay) order ────────────────────────────────────────────────
+    const handleOnlinePayment = async () => {
+      if (!window.Razorpay) {
+        alert("Payment gateway failed to load. Please refresh and try again.");
+        return;
+      }
+      if (!selectedAddr) {
+        alert("Please select a delivery address.");
+        return;
+      }
+
+      setPlacingOrder(true);
+      try {
+        const orderRes = await paymentApi.createOrder(grandTotal);
+        let userData = null;
+        try { userData = JSON.parse(localStorage.getItem("userData")); } catch {}
+
+        const options = {
+          key: orderRes.key_id,
+          amount: orderRes.amount,
+          currency: orderRes.currency,
+          order_id: orderRes.order_id,
+          name: "RedClay Dry Fruits",
+          description: "Order Payment",
+          prefill: {
+            name: `${selectedAddr.first_name || ""} ${selectedAddr.last_name || ""}`.trim(),
+            contact: selectedAddr.phone || "",
+          },
+          theme: { color: "#2E8B57" },
+          handler: async (response) => {
+            try {
+              await paymentApi.verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                order: {
+                  user_id: userData?.id || null,
+                  address_id: selectedAddressId,
+                  total_amount: grandTotal,
+                  items: finalItems.map((i) => ({
+                    product_id: i.id,
+                    name: i.name,
+                    size: i.size,
+                    price: i.price,
+                    quantity: i.quantity,
+                    image: i.image,
+                  })),
+                },
+              });
+              clearCart();
+              navigate("/order-confirmation", { state: { paymentMethod: "online" } });
+            } catch (e) {
+              alert(
+                "Payment succeeded but we couldn't confirm your order. " +
+                "Please contact us with payment ID: " + response.razorpay_payment_id
+              );
+            } finally {
+              setPlacingOrder(false);
+            }
+          },
+          modal: {
+            ondismiss: () => setPlacingOrder(false),
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", () => {
+          alert("Payment failed. Please try again.");
+          setPlacingOrder(false);
+        });
+        rzp.open();
+      } catch (e) {
+        alert("Unable to start payment. Please try again.");
+        setPlacingOrder(false);
+      }
     };
 
     const handleBackToStore = () => {
@@ -260,8 +335,8 @@
 
           <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-            {/* ── LEFT: DELIVERY / PAYMENT ──────────────────────────────────── */}
-            <div className="w-full lg:w-7/12">
+         
+          <div className="w-full lg:w-7/12 overflow-hidden">
               <AnimatePresence mode="wait">
 
                 {/* ── DELIVERY STEP ────────────────────────────────────────── */}
@@ -392,7 +467,7 @@
                   <motion.div key="payment" initial="hidden" animate="enter" exit="exit" variants={variants}
                     className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8"
                   >
-                    <h2 className="text-xl font-bold text-[#2E8B57] mb-2">Payment Method</h2>
+                    <h2 className="text-xl font-bold text-[#2E8B57] mb-2">Payment</h2>
 
                     {/* selected address summary */}
                     {selectedAddr && (
@@ -409,32 +484,6 @@
                       </div>
                     )}
 
-                    <div className="space-y-3 mb-8">
-                      {[
-                        { id: "online",   label: "Online Payment",  sub: "UPI, Cards, Netbanking", color: "#2E8B57" },
-                        { id: "whatsapp", label: "WhatsApp Order",   sub: "Pay after confirmation", color: "#25D366" },
-                      ].map(({ id, label, sub, color }) => (
-                        <div
-                          key={id}
-                          onClick={() => setPaymentMethod(id)}
-                          className={`p-5 border-2 rounded-2xl cursor-pointer flex items-center justify-between transition-all
-                            ${paymentMethod === id ? `border-[${color}] bg-green-50` : "border-gray-100 hover:border-gray-300"}`}
-                          style={paymentMethod === id ? { borderColor: color } : {}}
-                        >
-                          <div>
-                            <p className="font-bold text-gray-800 text-sm">{label}</p>
-                            <p className="text-xs text-gray-500">{sub}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center`}
-                            style={{ borderColor: paymentMethod === id ? color : "#d1d5db" }}>
-                            {paymentMethod === id && (
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
                     <div className="flex gap-3">
                       <button
                         onClick={() => setStep("delivery")}
@@ -443,26 +492,14 @@
                         ← Back
                       </button>
 
-                      {paymentMethod === "whatsapp" ? (
-                        <button
-                          onClick={handleWhatsAppOrder}
-                          className="flex-[2] bg-[#25D366] text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-[#1fba56] transition"
-                        >
-                          📲 Place WhatsApp Order
-                        </button>
-                      ) : (
-                        <button
-                          disabled={!paymentMethod}
-                          onClick={() => { clearCart(); navigate("/order-confirmation"); }}
-                          className={`flex-[2] py-4 rounded-xl font-bold text-sm shadow-lg transition-all
-                            ${paymentMethod
-                              ? "bg-[#C1440E] text-white hover:bg-[#a3390c]"
-                              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            }`}
-                        >
-                          ✓ Confirm Order
-                        </button>
-                      )}
+                      <button
+                        disabled={placingOrder}
+                        onClick={handleOnlinePayment}
+                        className="flex-[2] py-4 rounded-xl font-bold text-sm shadow-lg transition-all
+                          bg-[#C1440E] text-white hover:bg-[#a3390c] disabled:opacity-60"
+                      >
+                        {placingOrder ? "Processing…" : "Continue to Payment →"}
+                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -479,7 +516,12 @@
                     <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-3">
                       <div className="relative h-16 w-16 flex-shrink-0 bg-gray-50 rounded-xl border border-gray-100 p-1.5">
-                        <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
+                        <img
+                          src={item.image || FALLBACK_IMAGE}
+                          alt={item.name}
+                          onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_IMAGE; }}
+                          className="h-full w-full object-contain"
+                        />
                         <span className="absolute -top-2 -right-2 bg-[#2E8B57] text-white text-[10px] font-bold
                           w-5 h-5 flex items-center justify-center rounded-full shadow">
                           {item.quantity}

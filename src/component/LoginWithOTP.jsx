@@ -18,26 +18,27 @@ const LoginWithOTP = () => {
 
   const { requestOTP, verifyOTP, isAuthenticated, user } = useAuth();
 
- useEffect(() => {
-  if (isAuthenticated) {
-    const returnUrl = location.state?.from;
-    const directBuyItem = location.state?.directBuyItem;
+  useEffect(() => {
+    if (isAuthenticated) {
+      const returnUrl = location.state?.from;
+      const directBuyItem = location.state?.directBuyItem;
 
-    if (user?.user_type === "admin") {
-      navigate("/admin/dashboard");
-    } else {
-      if (returnUrl === "/checkout") {
-        navigate("/checkout", {
-          state: { directBuyItem },
-        });
-      } else if (returnUrl) {
-        navigate(returnUrl);
+      if (user?.user_type === "admin") {
+        navigate("/admin/dashboard");
       } else {
-        navigate("/"); // default home
+        if (returnUrl === "/checkout") {
+          navigate("/checkout", {
+            state: { directBuyItem },
+          });
+        } else if (returnUrl) {
+          navigate(returnUrl);
+        } else {
+          navigate("/");
+        }
       }
     }
-  }
-}, [isAuthenticated, user]);
+  }, [isAuthenticated, user]);
+
   // Animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
@@ -71,7 +72,6 @@ const LoginWithOTP = () => {
         ? phoneNumber
         : `+91${phoneNumber}`;
 
-      // Use AuthContext requestOTP so behavior is consistent across the app
       const {
         success,
         isAdmin,
@@ -81,13 +81,12 @@ const LoginWithOTP = () => {
 
       if (success) {
         setShowOtpField(true);
-        setOtpTimer(300); // 300 seconds (5 minutes) timer
+        setOtpTimer(300);
         setMessage({
           text: `OTP sent to ${formattedPhone}. Please verify.`,
           type: "success",
         });
 
-        // AuthContext already marks admin phones if applicable, but store fallback
         if (data?.user_type) {
           localStorage.setItem("userType", data.user_type);
         }
@@ -127,7 +126,6 @@ const LoginWithOTP = () => {
         ? phoneNumber
         : `+91${phoneNumber}`;
 
-      // Use AuthContext verifyOTP to set app-wide auth state
       const result = await verifyOTP(formattedPhone, otp);
 
       if (result.success) {
@@ -142,29 +140,28 @@ const LoginWithOTP = () => {
           type: "success",
         });
 
-        // Redirect based on user type immediately
         if (userData.user_type === "admin") {
           navigate("/admin/dashboard");
         } else {
           const returnUrl = location.state?.from;
           const directBuyItem = location.state?.directBuyItem;
           if (userData.user_type === "admin") {
-  navigate("/admin/dashboard");
-} else {
-  if (returnUrl === "/checkout") {
-    navigate("/checkout", {
-      state: { directBuyItem },
-    });
-  } else if (
-    returnUrl &&
-    !returnUrl.includes("/login") &&
-    !returnUrl.includes("/admin")
-  ) {
-    navigate(returnUrl);
-  } else {
-    navigate("/");
-  }
-}
+            navigate("/admin/dashboard");
+          } else {
+            if (returnUrl === "/checkout") {
+              navigate("/checkout", {
+                state: { directBuyItem },
+              });
+            } else if (
+              returnUrl &&
+              !returnUrl.includes("/login") &&
+              !returnUrl.includes("/admin")
+            ) {
+              navigate(returnUrl);
+            } else {
+              navigate("/");
+            }
+          }
         }
       } else {
         setMessage({ text: result.message || "Invalid OTP", type: "error" });
@@ -172,7 +169,6 @@ const LoginWithOTP = () => {
     } catch (error) {
       console.error("OTP verification error:", error);
 
-      // Enhanced error handling
       let errorMessage = "Verification failed";
 
       if (error.message) {
@@ -194,11 +190,10 @@ const LoginWithOTP = () => {
     }
   };
 
-  // Helper function to check if number is admin
   const isAdminNumber = (number) => {
     const cleanNumber = number.replace(/\D/g, "");
     const last10 = cleanNumber.slice(-10);
-    const adminNumbers = ["8754201900"]; // Add more admin numbers if needed (10-digit format)
+    const adminNumbers = ["8754201900"];
     return adminNumbers.includes(last10);
   };
 
@@ -223,27 +218,27 @@ const LoginWithOTP = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 overflow-hidden"
+        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-5 sm:p-8 overflow-hidden"
       >
         {/* Header */}
-        <motion.div className="text-center mb-8">
-          <motion.h2 className="text-3xl font-bold text-gray-900 mb-2">
+        <motion.div className="text-center mb-6 sm:mb-8">
+          <motion.h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Login with OTP
           </motion.h2>
-          <motion.p className="text-gray-600">
+          <motion.p className="text-sm sm:text-base text-gray-600">
             Enter your phone number to receive OTP
           </motion.p>
           {isAdminNumber(phoneNumber) && showOtpField && (
             <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-amber-600 font-medium mt-2"
+              className="text-amber-600 font-medium mt-2 text-sm"
             >
               Admin account detected
             </motion.p>
@@ -258,22 +253,23 @@ const LoginWithOTP = () => {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="space-y-6"
+              className="space-y-5 sm:space-y-6"
             >
               {!showOtpField ? (
-                <motion.form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                <motion.form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                       Phone Number
                     </label>
-                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 transition-all duration-300">
-                      <div className="flex items-center px-3 py-2 bg-gray-100 border-r border-gray-300">
+                    <div className="flex flex-col sm:flex-row sm:items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 transition-all duration-300">
+                      {/* Country Code Section - Fixed for Mobile */}
+                      <div className="flex items-center justify-center px-3 py-2 bg-gray-100 border-b sm:border-b-0 sm:border-r border-gray-300">
                         <img
                           src="https://flagcdn.com/w40/in.png"
                           alt="India"
-                          className="w-6 h-4 mr-2"
+                          className="w-5 h-3 sm:w-6 sm:h-4 mr-1 sm:mr-2"
                         />
-                        <span className="text-gray-700 font-medium">+91</span>
+                        <span className="text-gray-700 font-medium text-sm sm:text-base">+91</span>
                       </div>
                       <input
                         type="tel"
@@ -286,11 +282,12 @@ const LoginWithOTP = () => {
                         }}
                         placeholder="Enter your phone number"
                         required
-                        className="flex-1 px-3 py-2 border-0 focus:ring-0 focus:outline-none"
+                        className="flex-1 px-3 py-2 border-0 focus:ring-0 focus:outline-none text-sm sm:text-base"
                         pattern="[0-9]{10}"
                         maxLength="10"
                       />
                     </div>
+                        
                   </div>
 
                   <button
@@ -338,11 +335,16 @@ const LoginWithOTP = () => {
                   </button>
                 </motion.form>
               ) : (
-                <motion.form onSubmit={handleOtpSubmit} className="space-y-6">
+                <motion.form onSubmit={handleOtpSubmit} className="space-y-5 sm:space-y-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Enter OTP sent to +91{phoneNumber}
+                    <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                      Enter OTP sent to
                     </label>
+                    <div className="bg-gray-100 p-2 sm:p-3 rounded-lg text-center">
+                      <span className="text-sm sm:text-base font-semibold text-gray-800">
+                        +91{phoneNumber}
+                      </span>
+                    </div>
                     <input
                       type="text"
                       value={otp}
@@ -353,21 +355,22 @@ const LoginWithOTP = () => {
                       required
                       pattern="\d{6}"
                       maxLength="6"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center text-xl tracking-widest transition-all duration-300"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center text-lg sm:text-xl tracking-widest transition-all duration-300"
                     />
 
                     {otpTimer > 0 && (
-                      <p className="text-sm text-gray-500 text-center">
+                      <p className="text-xs sm:text-sm text-gray-500 text-center mt-2">
                         OTP expires in{" "}
-                        {`${Math.floor(otpTimer / 60)}:${(otpTimer % 60)
-                          .toString()
-                          .padStart(2, "0")}`}{" "}
-                        minutes
+                        <span className="font-semibold">
+                          {`${Math.floor(otpTimer / 60)}:${(otpTimer % 60)
+                            .toString()
+                            .padStart(2, "0")}`}
+                        </span>
                       </p>
                     )}
                   </div>
 
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="submit"
                       disabled={isLoading || otp.length !== 6}
@@ -398,7 +401,7 @@ const LoginWithOTP = () => {
                       setOtp("");
                       setMessage({ text: "", type: "" });
                     }}
-                    className="w-full text-center text-gray-600 hover:text-gray-700 text-sm transition-colors duration-300"
+                    className="w-full text-center text-gray-600 hover:text-gray-700 text-xs sm:text-sm transition-colors duration-300"
                   >
                     ← Change Phone Number
                   </button>
@@ -411,9 +414,9 @@ const LoginWithOTP = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-green-100 mb-4">
                 <svg
-                  className="h-8 w-8 text-green-600"
+                  className="h-7 w-7 sm:h-8 sm:w-8 text-green-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -426,17 +429,17 @@ const LoginWithOTP = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Welcome {userData?.user_type === "admin" ? "Admin" : "User"}!
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-sm sm:text-base text-gray-600 mb-6">
                 {userData?.user_type === "admin"
                   ? "You have successfully logged in as Administrator"
                   : "You have successfully logged in"}
               </p>
               <button
                 onClick={resetForm}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300"
+                className="px-5 sm:px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 text-sm sm:text-base"
               >
                 Login Again
               </button>
@@ -450,7 +453,7 @@ const LoginWithOTP = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className={`mt-4 p-3 rounded-md text-sm ${
+              className={`mt-4 p-3 rounded-md text-xs sm:text-sm ${
                 message.type === "success"
                   ? "bg-green-50 text-green-800 border border-green-200"
                   : "bg-red-50 text-red-800 border border-red-200"

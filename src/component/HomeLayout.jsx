@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "../services/api";
+import cashewImg from "../images/cashew.jpeg";
 import {
   FaLeaf,
   FaAppleAlt,
@@ -16,6 +17,7 @@ const topProducts = [
   {
     name: "Cashew Nuts (Mundhiri)",
     icon: FaLeaf,
+    image:cashewImg,
     category: "nuts",
     path: "/products?category=cashew",
   },
@@ -197,55 +199,81 @@ const HomeLayout = () => {
           {/* Desktop horizontal scroll */}
           <div className="hidden md:flex overflow-x-auto pb-4 scrollbar-hide">
             <div className="flex space-x-6 min-w-max px-4">
-              {topProducts.map((product, index) => {
-                const IconComponent = product.icon;
-                return (
-                  <motion.div
-                    key={product.name}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                    variants={topProductVariants}
-                    onClick={() => handleProductClick(product)}
-                    className="group flex flex-col items-center p-4 rounded-xl cursor-pointer border-2 border-[#2E8B57]/20 min-w-[140px] hover:bg-gradient-to-r hover:from-[#2E8B57] hover:to-[#C1440E] hover:text-white hover:border-transparent transition-all duration-300 hover:shadow-md"
-                  >
-                    <div className="bg-[#2E8B57] bg-opacity-10 p-3 rounded-full mb-3 group-hover:bg-opacity-30 transition-colors">
-                      <IconComponent className="text-2xl text-[#2E8B57] group-hover:text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-white text-center leading-tight">
-                      {product.name}
-                    </span>
-                  </motion.div>
-                );
-              })}
+{topProducts.map((product, index) => {
+  const IconComponent = product.icon;
+  return (
+    <motion.div
+      key={product.name}
+      custom={index}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      variants={topProductVariants}
+      onClick={() => handleProductClick(product)}
+      className="group flex flex-col items-center p-4 rounded-xl cursor-pointer border-2 border-[#2E8B57]/20 min-w-[140px] hover:bg-gradient-to-r hover:from-[#2E8B57] hover:to-[#C1440E] hover:text-white hover:border-transparent transition-all duration-300 hover:shadow-md"
+    >
+      <div
+        className={`w-16 h-16 rounded-full mb-3 flex items-center justify-center overflow-hidden ${
+          product.image
+            ? "border-2 border-[#2E8B57]/30"
+            : "bg-[#2E8B57] bg-opacity-10 group-hover:bg-opacity-30"
+        }`}
+      >
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <IconComponent className="text-2xl text-[#2E8B57] group-hover:text-white transition-colors" />
+        )}
+      </div>
+      <span className="text-sm font-medium text-gray-800 group-hover:text-white text-center leading-tight">
+        {product.name}
+      </span>
+    </motion.div>
+  );
+})}
             </div>
           </div>
 
           {/* Mobile grid */}
           <div className="grid grid-cols-3 gap-4 md:hidden px-2">
-            {topProducts.slice(0, 9).map((product, index) => {
-              const IconComponent = product.icon;
-              return (
-                <motion.div
-                  key={product.name}
-                  custom={index}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover="hover"
-                  variants={topProductVariants}
-                  onClick={() => handleProductClick(product)}
-                  className="flex flex-col items-center p-3 rounded-lg cursor-pointer border border-[#2E8B57]/20 hover:border-[#2E8B57]/40 transition-colors hover:shadow-md"
-                >
-                  <div className="bg-[#2E8B57] bg-opacity-10 p-2 rounded-full mb-2">
-                    <IconComponent className="text-xl text-[#2E8B57]" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-800 text-center leading-tight">
-                    {product.name.split("(")[0].trim()}
-                  </span>
-                </motion.div>
-              );
-            })}
+{topProducts.slice(0, 9).map((product, index) => {
+  const IconComponent = product.icon;
+  return (
+    <motion.div
+      key={product.name}
+      custom={index}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      variants={topProductVariants}
+      onClick={() => handleProductClick(product)}
+      className="flex flex-col items-center p-3 rounded-lg cursor-pointer border border-[#2E8B57]/20 hover:border-[#2E8B57]/40 transition-colors hover:shadow-md"
+    >
+      <div
+        className={`w-12 h-12 rounded-full mb-2 flex items-center justify-center overflow-hidden ${
+          product.image ? "border-2 border-[#2E8B57]/30" : "bg-[#2E8B57] bg-opacity-10"
+        }`}
+      >
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <IconComponent className="text-xl text-[#2E8B57]" />
+        )}
+      </div>
+      <span className="text-xs font-medium text-gray-800 text-center leading-tight">
+        {product.name.split("(")[0].trim()}
+      </span>
+    </motion.div>
+  );
+})}
           </div>
 
           {/* View All Button for Mobile */}
