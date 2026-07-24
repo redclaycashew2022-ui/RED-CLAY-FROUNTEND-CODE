@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
+import { addressApi, orderApi } from "../services/api";
 
 const Address = () => {
   const navigate = useNavigate();
@@ -11,7 +12,13 @@ const Address = () => {
   const [activeTab, setActiveTab] = useState("orders");
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [addresses, setAddresses] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [ordersError, setOrdersError] = useState("");
   const [formData, setFormData] = useState({
+    id: null,
     firstName: "",
     lastName: "",
     company: "",
@@ -20,11 +27,66 @@ const Address = () => {
     city: "",
     state: "",
     zipCode: "",
+    country: "India",
     isDefault: false,
   });
 
-  const [orders] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const normalizePhoneForLookup = () => {
+    const storedPhone =
+      localStorage.getItem("phoneNumber") ||
+      user?.phone_number ||
+      user?.phoneNumber ||
+      "";
+
+    return storedPhone || "";
+  };
+
+  const mapAddressFromApi = (address, fallbackPhone = "") => ({
+    id: address.id,
+    firstName: address.first_name || "",
+    lastName: address.last_name || "",
+    company: "",
+    address1: address.address || "",
+    address2: address.apartment || "",
+    city: address.city || "",
+    state: address.state || "",
+    zipCode: address.pincode || "",
+    country: address.country || "India",
+    phone: address.phone || fallbackPhone,
+    isDefault: false,
+  });
+
+  useEffect(() => {
+    const phone = normalizePhoneForLookup();
+    if (!phone) {
+      setLoadingProfile(false);
+      setLoadingOrders(false);
+      return;
+    }
+
+    const loadAccountData = async () => {
+      try {
+        const [addressResponse, orderResponse] = await Promise.all([
+          addressApi.getByPhone(phone),
+          orderApi.getByPhone(phone),
+        ]);
+
+        setAddresses(Array.isArray(addressResponse) ? addressResponse.map((item) => mapAddressFromApi(item, phone)) : []);
+        setOrders(Array.isArray(orderResponse) ? orderResponse : []);
+      } catch (error) {
+        console.error("Failed to load account data:", error);
+        setProfileError(error.message || "Unable to load your saved addresses.");
+        setOrdersError(error.message || "Unable to load your orders.");
+      } finally {
+        setLoadingProfile(false);
+        setLoadingOrders(false);
+      }
+    };
+
+    loadAccountData();
+  }, [user]);
 
   // Animation variants
   const containerVariants = {
@@ -81,46 +143,94 @@ const Address = () => {
     }));
   };
 
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
-    const newAddress = {
-      id: Date.now(),
-      ...formData,
-      country: "India",
-    };
 
-    if (formData.isDefault) {
-      setAddresses((prev) =>
-        prev.map((addr) => ({ ...addr, isDefault: false }))
-      );
+    const phone = normalizePhoneForLookup();
+    if (!phone) {
+      alert("Please log in again to save your address.");
+      return;
     }
 
-    setAddresses((prev) => [...prev, newAddress]);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      company: "",
-      address1: "",
-      address2: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      isDefault: false,
-    });
-    setShowAddAddressForm(false);
+    const payload = {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      phone,
+      address: formData.address1,
+      apartment: formData.address2,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.zipCode,
+      country: formData.country || "India",
+    };
+
+    try {
+      if (formData.id) {
+        const response = await addressApi.update(formData.id, payload);
+        const updatedAddress = response?.data || response;
+        setAddresses((prev) =>
+          prev.map((addr) =>
+            addr.id === formData.id ? mapAddressFromApi(updatedAddress, phone) : addr
+          )
+        );
+      } else {
+        const response = await addressApi.create(payload);
+        const createdAddress = response?.data || response;
+        setAddresses((prev) => [mapAddressFromApi(createdAddress, phone), ...prev]);
+      }
+
+      if (formData.isDefault) {
+        setAddresses((prev) =>
+          prev.map((addr) => ({ ...addr, isDefault: addr.id === formData.id }))
+        );
+      }
+
+      setFormData({
+        id: null,
+        firstName: "",
+        lastName: "",
+        company: "",
+        address1: "",
+        address2: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "India",
+        isDefault: false,
+      });
+      setShowAddAddressForm(false);
+    } catch (error) {
+      alert(error.message || "Unable to save address.");
+    }
   };
 
   const handleEditAddress = (id) => {
     const addressToEdit = addresses.find((addr) => addr.id === id);
     if (addressToEdit) {
-      setFormData(addressToEdit);
+      setFormData({
+        id: addressToEdit.id,
+        firstName: addressToEdit.firstName,
+        lastName: addressToEdit.lastName,
+        company: addressToEdit.company || "",
+        address1: addressToEdit.address1,
+        address2: addressToEdit.address2,
+        city: addressToEdit.city,
+        state: addressToEdit.state,
+        zipCode: addressToEdit.zipCode,
+        country: addressToEdit.country || "India",
+        isDefault: addressToEdit.isDefault,
+      });
       setShowAddAddressForm(true);
-      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
     }
   };
 
-  const handleDeleteAddress = (id) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+  const handleDeleteAddress = async (id) => {
+    try {
+      await addressApi.delete(id);
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+    } catch (error) {
+      alert(error.message || "Unable to delete address.");
+    }
   };
 
   const handleSetDefault = (id) => {
@@ -300,15 +410,34 @@ const Address = () => {
               {activeTab === "orders" ? (
                 <motion.div
                   key="orders"
-                  className="text-center"
+                  className="space-y-4"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.4 }}
                 >
-                  {orders.length === 0 ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
+                      Your Orders
+                    </h3>
+                    <button
+                      onClick={handleContinueShopping}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                    >
+                      Continue Shopping
+                    </button>
+                  </div>
+
+                  {loadingOrders && (
+                    <p className="text-sm text-gray-500">Loading your orders…</p>
+                  )}
+                  {ordersError && (
+                    <p className="text-sm text-red-500">{ordersError}</p>
+                  )}
+
+                  {!loadingOrders && !ordersError && orders.length === 0 ? (
                     <motion.div
-                      className="py-8 sm:py-12"
+                      className="py-8 sm:py-12 text-center"
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
@@ -339,23 +468,50 @@ const Address = () => {
                       >
                         Start shopping to see your orders here.
                       </motion.p>
-                      <motion.div className="mt-6" variants={itemVariants}>
-                        <motion.button
-                          onClick={handleContinueShopping}
-                          className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
-                          variants={buttonVariants}
-                          whileHover="hover"
-                          whileTap="tap"
-                        >
-                          Continue Shopping
-                        </motion.button>
-                      </motion.div>
                     </motion.div>
                   ) : (
-                    <div>
-                      <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                        Your Orders
-                      </h3>
+                    <div className="space-y-3">
+                      {orders.map((order) => (
+                        <div
+                          key={order.id}
+                          className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                Order #{order.id}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {order.created_at
+                                  ? new Date(order.created_at).toLocaleString("en-IN")
+                                  : "Recent order"}
+                              </p>
+                            </div>
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+                              {order.order_status || order.payment_status || "Pending"}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-gray-600">
+                            <p>
+                              <span className="font-semibold">Delivery:</span>{" "}
+                              {order.first_name || ""} {order.last_name || ""}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Mobile:</span>{" "}
+                              {order.phone || normalizePhoneForLookup() || "Not available"}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Address:</span>{" "}
+                              {order.address || ""}, {order.city || ""} — {order.pincode || ""}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Total:</span> ₹
+                              {Number(order.total_amount || 0).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </motion.div>
@@ -375,7 +531,31 @@ const Address = () => {
                     </h2>
 
                     <AnimatePresence>
-                      {addresses.length === 0 && !showAddAddressForm ? (
+                      {loadingProfile && (
+                        <motion.div
+                          className="text-center py-6 sm:py-8"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <p className="text-sm text-gray-500">Loading your saved addresses…</p>
+                        </motion.div>
+                      )}
+
+                      {!loadingProfile && profileError && (
+                        <motion.div
+                          className="text-center py-6 sm:py-8"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <p className="text-sm text-red-500">{profileError}</p>
+                        </motion.div>
+                      )}
+
+                      {!loadingProfile && !profileError && addresses.length === 0 && !showAddAddressForm ? (
                         <motion.div
                           className="text-center py-6 sm:py-8"
                           initial={{ opacity: 0, scale: 0.9 }}

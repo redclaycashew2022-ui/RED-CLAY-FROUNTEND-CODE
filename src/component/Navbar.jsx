@@ -378,7 +378,7 @@ useEffect(() => {
     </div>
   </div>
         
-        <nav className={`bg-gradient-to-r from-green-300 via-yellow-200 to-red-50 text-white py-2 shadow-sm transition-all duration-300 ${isScrolled ? "shadow-md" : "shadow-sm"}`}>
+       <nav className={`relative bg-gradient-to-r from-green-300 via-yellow-200 to-red-50 text-white py-2 shadow-sm transition-all duration-300 ${isScrolled ? "shadow-md" : "shadow-sm"}`}>
           
           {/* Mobile Top Bar */}
           <div className="md:hidden flex items-center justify-between px-4 py-3">

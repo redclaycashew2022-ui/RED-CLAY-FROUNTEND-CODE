@@ -242,6 +242,25 @@ export const categoryApi = {
   },
 };
 
+// Address APIs
+export const addressApi = {
+  getByPhone: (phone) => apiRequest(`/address/${phone}`),
+  create: (payload) =>
+    apiRequest("/address", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  update: (id, payload) =>
+    apiRequest(`/address/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  delete: (id) =>
+    apiRequest(`/address/${id}`, {
+      method: "DELETE",
+    }),
+};
+
 // Order APIs
 export const orderApi = {
   getByPhone: (phone) => apiRequest(`/orders/user/${phone}`),

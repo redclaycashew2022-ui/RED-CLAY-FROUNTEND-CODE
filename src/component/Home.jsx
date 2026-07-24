@@ -58,6 +58,9 @@ import celebGiftChat from "../images/giftchat.png";
 import celebTwoWindowBox from "../images/twowindowbox.png";
 import celebSmallBox from "../images/smallbox.png";
 import celebLaddu from "../images/laddu.png";
+import post2 from "../images/post2.jpg";
+import post3 from "../images/post3.jpg";
+import post4 from "../images/post4.jpg";
 
 
 const celebrationGalleryImages = [
@@ -108,7 +111,16 @@ const Home = () => {
   const [loadingCollectionId, setLoadingCollectionId] = useState(null);
   const [featuredGalleryId, setFeaturedGalleryId] = useState("hero");
   const [loadingGalleryId, setLoadingGalleryId] = useState(null);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [selectedGalleryItem, setSelectedGalleryItem] = useState(null);
+  const [isNavigatingToProducts, setIsNavigatingToProducts] = useState(false);
+  const [sliderIndex, setSliderIndex] = useState(0);
 
+  const sliderImages = [
+    { src: post2, alt: "Premium Farm Collection" },
+    { src: post3, alt: "Exclusive Selection" },
+    { src: post4, alt: "Special Offerings" },
+  ];
 
   const handleCollectionClick = async (item) => {
     setLoadingCollectionId(item.id);
@@ -162,21 +174,31 @@ const Home = () => {
     return [...firstTier, ...belowTier.filter((p) => !firstIds.has(p.id))];
   };
 
-  const handleGalleryClick = async (item) => {
-    setLoadingGalleryId(item.id);
+  const handleGalleryClick = (item) => {
+    setSelectedGalleryItem(item);
+    setShowGalleryModal(true);
+  };
+
+  const handleViewProductsFromModal = async (item) => {
+    setIsNavigatingToProducts(true);
     try {
       const result = await fetchGalleryProducts(item.filter);
+      setShowGalleryModal(false);
+      setSelectedGalleryItem(null);
       navigate("/products", {
         state: {
           products: result,
           subcategory: item.filter?.firstSubcategory || item.filter?.firstMainCategory || null,
+          fromGallery: true,
         },
       });
     } catch (error) {
       console.error("Error fetching gallery products:", error);
+      setShowGalleryModal(false);
+      setSelectedGalleryItem(null);
       navigate("/products");
     } finally {
-      setLoadingGalleryId(null);
+      setIsNavigatingToProducts(false);
     }
   };
 
@@ -316,7 +338,8 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (showW180Details || showW210Details || showW240Details || showW320Details ||
+    if (showGalleryModal ||
+        showW180Details || showW210Details || showW240Details || showW320Details ||
         showW450Details || wSplitDetails || cashewlwpDetails || spCashew || 
         roastedDetails || saltedCashew || bormaCashew || greenChili || bbcashew || 
         blockPepper || rawCashew || honeyCashew) {
@@ -328,7 +351,7 @@ const Home = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showW180Details, showW210Details, showW240Details, showW320Details, 
+  }, [showGalleryModal, showW180Details, showW210Details, showW240Details, showW320Details, 
       showW450Details, wSplitDetails, cashewlwpDetails, spCashew, 
       roastedDetails, saltedCashew, bormaCashew, greenChili, bbcashew, 
       blockPepper, rawCashew, honeyCashew]);
@@ -370,6 +393,13 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    const sliderInterval = setInterval(() => {
+      setSliderIndex((prev) => (prev + 1) % sliderImages.length);
+    }, 3000);
+    return () => clearInterval(sliderInterval);
+  }, []);
+
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
        const res = await fetch(`${API_BASE_URL}/premium-cashews`);
@@ -395,7 +425,7 @@ console.log("API PRODUCTS 👉", data.data);
     },
     {
       quote:
-        "I can taste the difference in quality. These are truly premium cashews.",
+        "I can taste the difference in quality. These are truly premium snacks.",
       name: "Rahul M.",
     },
   ];
@@ -780,6 +810,70 @@ console.log("API PRODUCTS 👉", data.data);
         </div>
       </section>
 
+      {/* Auto Image Slider Section */}
+      <section className="py-12 md:py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-10 md:mb-12 whitespace-nowrap"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            Explore Our Collections
+          </motion.h2>
+          
+          <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-xl bg-gray-100">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={sliderIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                className="absolute inset-0"
+              >
+                <img
+                  src={sliderImages[sliderIndex].src}
+                  alt={sliderImages[sliderIndex].alt}
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Gradient overlay with info */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 md:p-8">
+              <motion.p
+                key={`text-${sliderIndex}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5 }}
+                className="text-white text-lg md:text-xl font-semibold"
+              >
+                {sliderImages[sliderIndex].alt}
+              </motion.p>
+            </div>
+
+            {/* Indicator dots */}
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+              {sliderImages.map((_, index) => (
+                <motion.div
+                  key={index}
+                  animate={{
+                    scale: index === sliderIndex ? 1.2 : 1,
+                    opacity: index === sliderIndex ? 1 : 0.5,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className={`h-2 rounded-full transition-colors ${
+                    index === sliderIndex ? "bg-orange-500 w-8" : "bg-white w-2"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-16 bg-white">
         <motion.h2
@@ -939,6 +1033,73 @@ console.log("API PRODUCTS 👉", data.data);
             onClose={() => setHoneyCashew(null)}
             product={honeyCashew}
           />
+        )}
+
+        {/* Gallery Modal */}
+        {showGalleryModal && selectedGalleryItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowGalleryModal(false)}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowGalleryModal(false)}
+                className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Image */}
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <img
+                  src={selectedGalleryItem.src}
+                  alt={selectedGalleryItem.alt}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* Bottom action bar */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-white text-lg font-semibold">{selectedGalleryItem.alt}</h3>
+                </div>
+                <button
+                  onClick={() => handleViewProductsFromModal(selectedGalleryItem)}
+                  disabled={isNavigatingToProducts}
+                  className="ml-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                >
+                  {isNavigatingToProducts ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      View Products
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </main>

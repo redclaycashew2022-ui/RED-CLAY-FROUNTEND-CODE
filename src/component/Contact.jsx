@@ -137,7 +137,7 @@ const Contact = () => {
             <li className="flex items-start">
               <FaMapMarkerAlt className="mt-1 mr-3 flex-shrink-0 text-[#2E8B57]" />
               <span>
-                Panruti, Cuddalore District
+                Panruti Main Road, Kothapakam, Cuddaloure District, 607102
                 <br />
                 Tamil Nadu, India
               </span>
@@ -154,7 +154,7 @@ const Contact = () => {
                 href="mailto:redclaycashews2022@gmail.com"
                 className="hover:text-[#C1440E] transition-colors"
               >
-                redclaycashews2022@gmail.com
+                redclaycashew2022@gmail.com
               </a>
             </li>
             <li className="flex items-center">
