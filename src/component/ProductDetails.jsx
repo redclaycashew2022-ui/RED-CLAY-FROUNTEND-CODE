@@ -292,16 +292,6 @@ const ProductDetails = () => {
                   <span className="text-2xl sm:text-3xl text-[#2E8B57] font-bold">
                     ₹{currentPrice}
                   </span>
-                  {currentMRP && (
-                    <span className="text-gray-500 line-through text-base sm:text-lg">
-                      ₹{currentMRP}
-                    </span>
-                  )}
-                  {currentMRP && currentMRP > currentPrice && (
-                    <span className="text-[#2E8B57] font-semibold text-sm bg-green-50 px-2 py-1 rounded">
-                      Save ₹{currentMRP - currentPrice}
-                    </span>
-                  )}
                 </div>
                 <div className="text-xs text-gray-500">
                   Inclusive of all taxes

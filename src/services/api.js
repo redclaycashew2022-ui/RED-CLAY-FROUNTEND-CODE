@@ -1,21 +1,18 @@
 // // src/services/api.js
-// const API_BASE_URL =
+
+
+
+
+
+
+// export const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
-//   import.meta.env.VITE_REACT_APP_API_URL ||
-//   // "https://red-clay-backend.onrender.com/api"
-//   "http://localhost:5000/api"
-
-
-// export const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
-// const API_BASE_URL = "http://localhost:5000/api"; 
-// const API_BASE_URL = "https://red-clay-backend.onrender.com/api";
+//   "https://red-clay-backend.onrender.com/api";
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://red-clay-backend.onrender.com/api";
-
-// export const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_REACT_APP_API_URL ||
+  "http://localhost:5000/api";
 
 // Origin of the backend server (strips trailing "/api"), used to resolve
 // image paths like "/uploadimage/foo.jpg" that the backend returns.
