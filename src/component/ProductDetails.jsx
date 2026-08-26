@@ -469,8 +469,13 @@ const ProductDetails = () => {
                     ₹{item.sizes?.[0]?.price || item.price}
                   </div>
                   {item.sizes?.[0]?.mrp_price && (
-                    <div className="text-xs text-gray-500 line-through">
-                      MRP ₹{item.sizes[0].mrp_price}
+                    <div className="text-xs text-[#C1440E] font-semibold">
+                      {Math.round(
+                        ((item.sizes[0].mrp_price - (item.sizes[0].price || item.price)) /
+                          item.sizes[0].mrp_price) *
+                          100
+                      )}
+                      % off
                     </div>
                   )}
                 </motion.div>

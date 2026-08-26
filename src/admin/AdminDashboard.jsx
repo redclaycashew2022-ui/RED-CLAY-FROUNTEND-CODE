@@ -92,6 +92,11 @@ const AdminDashboard = () => {
 
   const quickActions = [
     {
+      label: "Manage Orders",
+      path: "/admin/orders",
+      color: "bg-[#2E8B57] hover:bg-[#1a6b3a]",
+    },
+    {
       label: "Manage Products",
       path: "/admin/products",
       color: "bg-[#2E8B57] hover:bg-[#1a6b3a]",

@@ -260,6 +260,7 @@ export const addressApi = {
 
 // Order APIs
 export const orderApi = {
+  getAll: () => apiRequest("/orders"),
   getByPhone: (phone) => apiRequest(`/orders/user/${phone}`),
   updateStatus: (id, status) =>
     apiRequest(`/orders/${id}/status`, {

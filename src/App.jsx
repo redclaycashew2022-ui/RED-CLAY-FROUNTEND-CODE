@@ -19,7 +19,7 @@ import Address from "./component/Address";
 import Contact from "./component/Contact";
 import AdminDashboard from "./admin/AdminDashboard";
 import OrderConfirmation from "./component/OrderConfirmation";
-import CreateOrder from "./admin/CreateOrder";
+import AdminOrders from "./admin/AdminOrders";
 
 // Import AuthProvider and ProtectedRoute
 import { AuthProvider } from "./context/AuthContext.jsx";
@@ -123,14 +123,14 @@ function RouteLayout() {
           />
 
           {/* Order Management Route */}
-          {/* <Route
+          <Route
             path="/admin/orders"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <CreateOrder />
+                <AdminOrders />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
           {/* Product Management Route */}
           <Route
