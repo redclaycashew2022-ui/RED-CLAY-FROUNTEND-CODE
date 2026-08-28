@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { adminApi } from "../services/api";
+import { adminApi, billingApi } from "../services/api";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -63,6 +63,16 @@ const AdminDashboard = () => {
   };
 
   
+  const handleBillingRedirect = async () => {
+    try {
+      const { redirectUrl } = await billingApi.getSsoUrl();
+      window.location.href = redirectUrl;
+    } catch (err) {
+      console.error("Billing SSO error:", err);
+      alert(err.message || "Failed to open Billing");
+    }
+  };
+
   const handleBackAlternative = () => {
     console.log("Using alternative back method");
     if (window.history.length > 1) {
@@ -113,6 +123,11 @@ const AdminDashboard = () => {
       label: "View Users",
       path: "/admin/users",
       color: "bg-[#2E8B57] hover:bg-[#1a6b3a]",
+    },
+    {
+      label: "Billing",
+      color: "bg-[#C1440E] hover:bg-[#9c360b]",
+      onClick: handleBillingRedirect,
     },
   ];
 
@@ -185,6 +200,7 @@ const AdminDashboard = () => {
               <button
                 key={idx}
                 onClick={() => {
+                  if (action.onClick) return action.onClick();
                   console.log(`Navigating to: ${action.path}`);
                   navigate(action.path, { state: action.state });
                 }}

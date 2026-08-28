@@ -305,6 +305,12 @@ export const adminApi = {
   getStats: () => apiRequest("/admin/stats"),
 };
 
+// Billing SSO: fetches a one-time redirect URL (with a short-lived signed
+// token) into the billing project, so the admin lands there already logged in.
+export const billingApi = {
+  getSsoUrl: () => apiRequest("/admin/billing-sso"),
+};
+
 // Auth APIs (for completeness)
 export const authApi = {
   requestOTP: (phone) =>
