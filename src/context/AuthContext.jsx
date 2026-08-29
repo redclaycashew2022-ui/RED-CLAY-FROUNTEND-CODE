@@ -12,7 +12,10 @@ export const AuthProvider = ({ children }) => {
 
   // Base URL for your backend - local development
   // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-  const API_BASE_URL = "https://red-clay-backend.onrender.com"; 
+  // const API_BASE_URL = "https://red-clay-backend.onrender.com"; 
+  const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "https://red-clay-backend.onrender.com/api"
+).replace(/\/api\/?$/, "");
 
 // const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL?.replace("/api", "") ||
