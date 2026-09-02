@@ -41,7 +41,7 @@ const ExportForm = ({
           <div>
             <label className="block text-sm font-medium mb-2">Sizes and Prices</label>
             {exportFormData.sizes.map((sizeItem, index) => (
-              <div key={index} className="flex gap-2 mb-2">
+              <div key={index} className="flex flex-col sm:flex-row gap-2 mb-2">
                 <input
                   type="text"
                   value={sizeItem.size}
@@ -62,7 +62,7 @@ const ExportForm = ({
                   <button
                     type="button"
                     onClick={() => onRemoveSize(index)}
-                    className="px-3 py-2 text-red-600 hover:text-red-800"
+                    className="self-end sm:self-auto px-3 py-2 text-red-600 hover:text-red-800"
                     disabled={loading}
                   >
                     <svg
