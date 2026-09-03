@@ -206,7 +206,7 @@ const Home = () => {
   const fetchProductDetails = async (productName) => {
     try {
       const encodedName = encodeURIComponent(productName);
-      const response = await fetch(`${API_BASE_URL}/export-premium-cashews?name=${encodedName}`);
+      const response = await fetch(`${API_BASE_URL}/premium-cashews?name=${encodedName}`);
       const data = await response.json();
       
       if (data.success && data.data && data.data.length > 0) {
