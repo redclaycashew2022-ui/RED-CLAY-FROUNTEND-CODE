@@ -287,27 +287,35 @@ const Home = () => {
         ? product.image
         : `${window.location.origin}${product.image}`;
 
-      const productData = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: absoluteImage,
-        grade: product.grade,
-        description: product.description,
-        image_url: absoluteImage,
-        image_url1: absoluteImage,
+        const sizes = apiProductData
+  ? [{
+      size: apiProductData.size || "250g",
+      price: apiProductData.price,
+      mrp_price: apiProductData.mrp_price || null,
+    }]
+  : [{
+      size: "250g",
+      price: product.price,
+      mrp_price: null,
+    }];
 
-        sizes: apiProductData && apiProductData.sizes ? apiProductData.sizes : [{
-          size: "250g",
-          price: product.price,
-          mrp_price: null
-        }],
-        stock: 10,
-        pt: null
-      };
-      
+   const productData = {
+  id: product.id,
+  name: product.name,
+  price: apiProductData ? apiProductData.price : product.price, 
+  image: absoluteImage,
+  grade: product.grade,
+  description: product.description,
+  image_url: absoluteImage,
+  image_url1: absoluteImage,
+  sizes,
+  stock: 10,
+  pt: null
+};
 
-      navigate("/productdetails", { state: { product: productData } });
+
+
+navigate("/productdetails", { state: { product: productData } });
     } catch (error) {
       console.error("Error in buy click:", error);
  
