@@ -203,21 +203,30 @@ const Home = () => {
   };
 
 
-  const fetchProductDetails = async (productName) => {
-    try {
-      const encodedName = encodeURIComponent(productName);
-      const response = await fetch(`${API_BASE_URL}/premium-cashews?name=${encodedName}`);
-      const data = await response.json();
-      
-      if (data.success && data.data && data.data.length > 0) {
-        return data.data[0];
-      }
-      return null;
-    } catch (error) {
-      console.error("Error fetching product details:", error);
-      return null;
+const fetchProductDetails = async (productName, localProductName) => {
+  try {
+    const encodedName = encodeURIComponent(productName);
+    const response = await fetch(`${API_BASE_URL}/premium-cashews?name=${encodedName}`);
+    const data = await response.json();
+
+    if (data.success && data.data && data.data.length > 0) {
+      // Normalize: remove extra spaces, hyphens, lowercase — so
+      // "Whole White-180" (local) matches "Whole White- 180" (API)
+      const normalize = (s) => (s || "").toLowerCase().replace(/[\s-]+/g, "");
+
+      const target = normalize(localProductName);
+      const exactMatch = data.data.find(
+        (item) => normalize(item.name) === target
+      );
+
+      return exactMatch || data.data[0]; // fallback only if no exact match found
     }
-  };
+    return null;
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    return null;
+  }
+};
 
   
   const handleBuyClick = async (product) => {
@@ -280,7 +289,7 @@ const Home = () => {
           apiProductName = product.name;
       }
 
-      const apiProductData = await fetchProductDetails(apiProductName);
+      const apiProductData = await fetchProductDetails(apiProductName, product.name);
 
 
       const absoluteImage = product.image.startsWith("http")
