@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const CreateOrder = () => {
   const navigate = useNavigate();
   return (
-    <div className="p-8 bg-white rounded-lg shadow-md">
+    <div className="p-4 sm:p-6 md:p-8 bg-white rounded-lg shadow-md">
       <div className="flex items-center mb-4">
         <button
           onClick={() => navigate(-1)}

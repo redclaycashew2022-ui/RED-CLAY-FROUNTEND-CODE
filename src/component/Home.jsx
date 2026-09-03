@@ -287,27 +287,35 @@ const Home = () => {
         ? product.image
         : `${window.location.origin}${product.image}`;
 
-      const productData = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: absoluteImage,
-        grade: product.grade,
-        description: product.description,
-        image_url: absoluteImage,
-        image_url1: absoluteImage,
+        const sizes = apiProductData
+  ? [{
+      size: apiProductData.size || "250g",
+      price: apiProductData.price,
+      mrp_price: apiProductData.mrp_price || null,
+    }]
+  : [{
+      size: "250g",
+      price: product.price,
+      mrp_price: null,
+    }];
 
-        sizes: apiProductData && apiProductData.sizes ? apiProductData.sizes : [{
-          size: "250g",
-          price: product.price,
-          mrp_price: null
-        }],
-        stock: 10,
-        pt: null
-      };
-      
+   const productData = {
+  id: product.id,
+  name: product.name,
+  price: apiProductData ? apiProductData.price : product.price, 
+  image: absoluteImage,
+  grade: product.grade,
+  description: product.description,
+  image_url: absoluteImage,
+  image_url1: absoluteImage,
+  sizes,
+  stock: 10,
+  pt: null
+};
 
-      navigate("/productdetails", { state: { product: productData } });
+
+
+navigate("/productdetails", { state: { product: productData } });
     } catch (error) {
       console.error("Error in buy click:", error);
  
@@ -593,7 +601,7 @@ console.log("API PRODUCTS 👉", data.data);
 
        <div className="relative h-full flex items-center">
   <motion.div
-    className="text-left text-white px-10 md:px-10 max-w-4xl"
+    className="text-left text-white px-4 sm:px-6 md:px-10 max-w-4xl"
     initial={{ opacity: 0, y: 50 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 1, delay: 0.5 }}
@@ -615,7 +623,7 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
         <div className="max-w-7xl mx-auto">
           <motion.h2
-            className="text-[clamp(0.65rem,2.8vw,1.5rem)] sm:text-xl md:text-3xl font-bold text-[#2E8B57] text-left mb-8 md:mb-10 whitespace-nowrap"
+            className="text-lg sm:text-xl md:text-3xl font-bold text-[#2E8B57] text-left mb-8 md:mb-10"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -668,7 +676,7 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
         <div className="max-w-7xl mx-auto">
           <motion.h2
-            className="text-[clamp(0.7rem,3.7vw,1.5rem)] sm:text-3xl md:text-4xl font-bold text-[#2E8B57] text-left mb-10 md:mb-12 whitespace-nowrap"
+            className="text-lg sm:text-3xl md:text-4xl font-bold text-[#2E8B57] text-left mb-10 md:mb-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -780,7 +788,7 @@ console.log("API PRODUCTS 👉", data.data);
       {/* From Farm to Table Section */}
       <section className="py-16 bg-[#F5F5F0]">
         <motion.h2
-          className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-12 whitespace-nowrap px-2"
+          className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-12 px-2"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -814,7 +822,7 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-12 md:py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
-            className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-10 md:mb-12 whitespace-nowrap"
+            className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-10 md:mb-12"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -877,7 +885,7 @@ console.log("API PRODUCTS 👉", data.data);
       {/* Testimonials Section */}
       <section className="py-16 bg-white">
         <motion.h2
-          className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold text-center mb-12 whitespace-nowrap px-2"
+          className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-12 px-2"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -917,7 +925,7 @@ console.log("API PRODUCTS 👉", data.data);
           <span className="inline-block px-4 py-1 bg-white rounded-full mb-4 font-bold shadow-sm">
             Limited Time
           </span>
-          <h2 className="text-[clamp(1.1rem,6vw,1.875rem)] font-bold mb-4 whitespace-nowrap">Monsoon Harvest Special</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4">Monsoon Harvest Special</h2>
           <p className="text-lg mb-6">
             Fresh batch just arrived from our Panruti farms
           </p>

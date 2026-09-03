@@ -982,7 +982,7 @@ const PremiumCashewManager = () => {
       </div>
 
       {/* Tab Buttons */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
         <button
           onClick={() => switchTab("manage")}
           className={`px-6 py-3 rounded-lg font-medium transition ${

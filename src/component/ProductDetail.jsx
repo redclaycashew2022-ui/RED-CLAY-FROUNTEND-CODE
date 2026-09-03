@@ -73,16 +73,16 @@ console.log("ProductDetail rendering", productId);
 
             {/* Product Info */}
             <div className="w-full md:w-1/2">
-              <h1 className="text-3xl font-bold text-[#2E8B57] mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#2E8B57] mb-2">
                 {product.name}
               </h1>
-              <h2 className="text-xl text-[#C1440E] mb-6">
+              <h2 className="text-lg sm:text-xl text-[#C1440E] mb-6">
                 {product.description}
               </h2>
 
               {/* Why Choose Section */}
               <div className="mb-8">
-                <h3 className="text-2xl font-semibold text-[#2E8B57] mb-4">
+                <h3 className="text-xl sm:text-2xl font-semibold text-[#2E8B57] mb-4">
                   ✅ Why Choose {product.id} Cashews?
                 </h3>
                 <ul className="space-y-2">
@@ -97,7 +97,7 @@ console.log("ProductDetail rendering", productId);
 
               {/* Ideal Uses Section */}
               <div>
-                <h3 className="text-2xl font-semibold text-[#2E8B57] mb-4">
+                <h3 className="text-xl sm:text-2xl font-semibold text-[#2E8B57] mb-4">
                   🍽️ Ideal Uses of {product.id} Cashews
                 </h3>
                 <ul className="space-y-2">

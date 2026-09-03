@@ -78,12 +78,14 @@ const handleRemoveItem = (itemId, itemSize) => {
                     </div>
                     
                     {/* Price */}
-                    <div className="md:col-span-2 text-center">
+                    <div className="md:col-span-2 flex md:block items-center justify-between w-full md:w-auto md:text-center">
+                      <span className="md:hidden text-xs text-gray-400">Price</span>
                       <span className="font-medium text-gray-800">₹{item.price}</span>
                     </div>
-                    
+
                     {/* Quantity */}
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-3 flex md:block items-center justify-between w-full md:w-auto">
+                      <span className="md:hidden text-xs text-gray-400">Quantity</span>
                       <div className="flex items-center justify-center space-x-3">
                         <button
                           onClick={() => handleQuantityChange(item.id, item.size, item.quantity, -1)}
@@ -100,9 +102,10 @@ const handleRemoveItem = (itemId, itemSize) => {
                         </button>
                       </div>
                     </div>
-                    
+
                     {/* Total */}
-                    <div className="md:col-span-1 text-center">
+                    <div className="md:col-span-1 flex md:block items-center justify-between w-full md:w-auto md:text-center">
+                      <span className="md:hidden text-xs text-gray-400">Total</span>
                       <span className="font-semibold text-[#2E8B57]">
                         ₹{item.price * item.quantity}
                       </span>
