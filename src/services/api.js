@@ -6,18 +6,15 @@
 
 
 // export const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   "https://red-clay-backend.onrender.com/api";
-
-export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_REACT_APP_API_URL ||
-  "http://localhost:5000/api";
+  "https://red-clay-backend.onrender.com/api";
 
-// Origin of the backend server (strips trailing "/api"), used to resolve
-// image paths like "/uploadimage/foo.jpg" that the backend returns.
-// Do NOT use window.location.origin for this — in dev that's the Vite
-// frontend (5173), not the backend (5000), so images would 404.
+// export const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   import.meta.env.VITE_REACT_APP_API_URL ||
+//   "http://localhost:5000/api";
+
+
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 // Turns a relative path returned by the backend into a full, loadable URL.

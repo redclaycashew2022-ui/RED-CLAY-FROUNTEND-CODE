@@ -90,6 +90,7 @@ const INITIAL_FORM = {
   name: "",
   description: "",
   sizes: [],
+  price: "",
   stock: 0,
   pack_of: [],
   category: "",
@@ -109,7 +110,8 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
   const [priceInput, setPriceInput] = useState("");
   const [mrpInput, setMrpInput] = useState("");
 
- 
+  const isGift = form.maincategory === "Gifts";
+
   useEffect(() => {
     if (editingProduct) {
       const images = [];
@@ -130,6 +132,7 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
         name: editingProduct.name || "",
         description: editingProduct.description || "",
         sizes: processedSizes,
+        price: editingProduct.price || "",
         stock: editingProduct.stock || 0,
         pack_of: Array.isArray(editingProduct.pack_of)
           ? editingProduct.pack_of
@@ -201,7 +204,7 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
     const payload = {
       name: form.name,
       description: form.description,
-      price: Number(form.sale_price || form.price || 0),
+      price: isGift ? Number(form.price || 0) : Number(form.sale_price || form.price || 0),
       mrp_price: form.mrp_price ? Number(form.mrp_price) : null,
       sale_price: form.sale_price ? Number(form.sale_price) : null,
       stock: Number(form.stock),
@@ -214,7 +217,9 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
       image_url: form.images[0] ? toRelativeImagePath(form.images[0]) : null,
       ...imageData,
       is_active: form.is_active,
-      sizes: Array.isArray(form.sizes)
+      sizes: isGift
+        ? []
+        : Array.isArray(form.sizes)
         ? form.sizes.map((item) => ({
             pack_size: item.size,
             price: Number(item.price),
@@ -282,88 +287,106 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
             />
           </div>
 
-          {/* Sizes Section */}
-          <div className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
-            <label className="block text-sm font-medium mb-3">Sizes with Price & MRP</label>
-
-            {/* Add Size Row */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <input
-                type="text"
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                className="flex-1 min-w-[100px] p-2 border rounded text-sm"
-                placeholder="Size (e.g. 200g)"
-              />
+          {/* Sizes / Price Section (conditional on category) */}
+          {isGift ? (
+            <div>
+              <label className="block text-sm font-medium">
+                Price <span className="text-red-500">*</span>
+              </label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
-                value={priceInput}
-                onChange={(e) => setPriceInput(e.target.value)}
-                className="flex-1 min-w-[100px] p-2 border rounded text-sm"
-                placeholder="Price"
+                required
+                value={form.price}
+                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                className="w-full mt-1 p-2 border rounded text-sm"
+                placeholder="Enter price"
               />
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={mrpInput}
-                onChange={(e) => setMrpInput(e.target.value)}
-                className="flex-1 min-w-[100px] p-2 border rounded text-sm"
-                placeholder="MRP"
-              />
-              <button
-                type="button"
-                onClick={addSize}
-                className="px-3 py-2 bg-[#2E8B57] text-white rounded text-sm whitespace-nowrap"
-              >
-                Add
-              </button>
             </div>
+          ) : (
+            <div className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+              <label className="block text-sm font-medium mb-3">Sizes with Price & MRP</label>
 
-            {/* Sizes List */}
-            <div className="space-y-2">
-              {form.sizes.length === 0 ? (
-                <div className="text-xs text-gray-400 italic p-3 text-center border border-dashed rounded">
-                  No sizes added yet
-                </div>
-              ) : (
-                form.sizes.map((item, idx) => (
-                  <div key={idx} className="flex flex-wrap gap-2 items-center text-sm bg-white p-2 rounded border">
-                    <input
-                      type="text"
-                      value={item.size}
-                      onChange={(e) => updateSize(idx, "size", e.target.value)}
-                      className="w-20 p-1 border rounded text-sm"
-                      placeholder="Size"
-                    />
-                    <input
-                      type="number"
-                      value={item.price}
-                      onChange={(e) => updateSize(idx, "price", e.target.value)}
-                      className="w-20 p-1 border rounded text-sm"
-                      placeholder="Price"
-                    />
-                    <input
-                      type="number"
-                      value={item.mrp_price}
-                      onChange={(e) => updateSize(idx, "mrp_price", e.target.value)}
-                      className="w-20 p-1 border rounded text-sm"
-                      placeholder="MRP"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeSize(idx)}
-                      className="text-red-500 text-sm ml-auto"
-                    >
-                      ✕
-                    </button>
+              {/* Add Size Row */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <input
+                  type="text"
+                  value={sizeInput}
+                  onChange={(e) => setSizeInput(e.target.value)}
+                  className="flex-1 min-w-[100px] p-2 border rounded text-sm"
+                  placeholder="Size (e.g. 200g)"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={priceInput}
+                  onChange={(e) => setPriceInput(e.target.value)}
+                  className="flex-1 min-w-[100px] p-2 border rounded text-sm"
+                  placeholder="Price"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={mrpInput}
+                  onChange={(e) => setMrpInput(e.target.value)}
+                  className="flex-1 min-w-[100px] p-2 border rounded text-sm"
+                  placeholder="MRP"
+                />
+                <button
+                  type="button"
+                  onClick={addSize}
+                  className="px-3 py-2 bg-[#2E8B57] text-white rounded text-sm whitespace-nowrap"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Sizes List */}
+              <div className="space-y-2">
+                {form.sizes.length === 0 ? (
+                  <div className="text-xs text-gray-400 italic p-3 text-center border border-dashed rounded">
+                    No sizes added yet
                   </div>
-                ))
-              )}
+                ) : (
+                  form.sizes.map((item, idx) => (
+                    <div key={idx} className="flex flex-wrap gap-2 items-center text-sm bg-white p-2 rounded border">
+                      <input
+                        type="text"
+                        value={item.size}
+                        onChange={(e) => updateSize(idx, "size", e.target.value)}
+                        className="w-20 p-1 border rounded text-sm"
+                        placeholder="Size"
+                      />
+                      <input
+                        type="number"
+                        value={item.price}
+                        onChange={(e) => updateSize(idx, "price", e.target.value)}
+                        className="w-20 p-1 border rounded text-sm"
+                        placeholder="Price"
+                      />
+                      <input
+                        type="number"
+                        value={item.mrp_price}
+                        onChange={(e) => updateSize(idx, "mrp_price", e.target.value)}
+                        className="w-20 p-1 border rounded text-sm"
+                        placeholder="MRP"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSize(idx)}
+                        className="text-red-500 text-sm ml-auto"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Categories */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -465,6 +488,7 @@ const ProductForm = ({ editingProduct, onClose, onSubmit, loading }) => {
             >
               Cancel
             </button>
+            
             <button
               type="submit"
               disabled={form.images.length === 0 || loading}
