@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL, productApi } from "../services/api";
@@ -20,22 +20,24 @@ import BlockPepperSalted from "../wwimages/BlockPepperSalted.png";
 import RawSpicycashewwithskin from "../wwimages/RawSpicycashewwithskin.png";
 import honeyroasted from "../wwimages/honeyroasted.png";
 
-import W180Details from "./W180Details";
-import W210Details from "./W210Details";
-import W240Details from "./W240Details";
-import W320Details from "./W320Details";
-import W450Details from "./W450Details";
-import WSplitDetails from "./WSplitDetails";
-import LWPDetails from "./LWPDetails";
-import BBDetails from "./BBDetails";
-import SPDetails from "./SPDetails";
-import RoastedCashew from "./RoastedCashew";
-import SaltedDetails from "./SaltedDetails";
-import BormaCashew from "./BormaCashew";
-import GreenChiliDetails from "./GreenChiliDetails";
-import BlockPepperDetails from "./BlockPepperDertails";
-import RawcashewDetails from "./RawCashewDetails";
-import HoneyCashewDetails from "./HoneyCashewDetails";
+// Lazy-loaded modal components — none of these render until a product is
+// clicked, so keeping them out of the initial bundle speeds up first paint.
+const W180Details = lazy(() => import("./W180Details"));
+const W210Details = lazy(() => import("./W210Details"));
+const W240Details = lazy(() => import("./W240Details"));
+const W320Details = lazy(() => import("./W320Details"));
+const W450Details = lazy(() => import("./W450Details"));
+const WSplitDetails = lazy(() => import("./WSplitDetails"));
+const LWPDetails = lazy(() => import("./LWPDetails"));
+const BBDetails = lazy(() => import("./BBDetails"));
+const SPDetails = lazy(() => import("./SPDetails"));
+const RoastedCashew = lazy(() => import("./RoastedCashew"));
+const SaltedDetails = lazy(() => import("./SaltedDetails"));
+const BormaCashew = lazy(() => import("./BormaCashew"));
+const GreenChiliDetails = lazy(() => import("./GreenChiliDetails"));
+const BlockPepperDetails = lazy(() => import("./BlockPepperDertails"));
+const RawcashewDetails = lazy(() => import("./RawCashewDetails"));
+const HoneyCashewDetails = lazy(() => import("./HoneyCashewDetails"));
 
 import morecashew from "../images/morecashew.jpg";
 import coverImage from "../images/coverimage.png";
@@ -62,7 +64,6 @@ import post2 from "../images/post2.jpg";
 import post3 from "../images/post3.jpg";
 import post4 from "../images/post4.jpg";
 
-
 const celebrationGalleryImages = [
   { id: "hero", src: celebHero, alt: "Festive Dry Fruit Gifting", filter: { firstMainCategory: "Gifts", belowAll: true } },
   { id: "hamper", src: celebHamper, alt: "Premium Gift Hamper", filter: { firstSubcategory: "Dry Fruit Gifting", belowAll: true } },
@@ -86,6 +87,14 @@ const celebrationCollection = [
   { id: "container4long", name: "Signature 4-Compartment Dry Fruit Gift Box", image: container4Long, homepageCollection: "4-Compartment Box" },
 ];
 
+// Simple shimmer skeleton for product-style cards while API data loads.
+const ProductCardSkeleton = () => (
+  <div className="flex-shrink-0 snap-start w-[45%] sm:w-[32%] md:w-[24%] lg:w-[20%] xl:w-[15%]">
+    <div className="aspect-square rounded-2xl bg-gray-200 animate-pulse" />
+    <div className="mt-3 h-4 w-3/4 mx-auto rounded bg-gray-200 animate-pulse" />
+  </div>
+);
+
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -107,6 +116,7 @@ const Home = () => {
   const [rawCashew, setRawCashew] = useState(null);
   const [honeyCashew, setHoneyCashew] = useState(null);
   const [apiProducts, setApiProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [loadingProductId, setLoadingProductId] = useState(null);
   const [loadingCollectionId, setLoadingCollectionId] = useState(null);
   const [featuredGalleryId, setFeaturedGalleryId] = useState("hero");
@@ -143,8 +153,6 @@ const Home = () => {
     }
   };
 
-  // Exact-match filtering (not substring) so lookalike values like
-  // "2containerlong" vs "2containerlong seeds" don't bleed into each other.
   const fetchGalleryProducts = async (filter = {}) => {
     const all = await productApi.getAll();
     const list = Array.isArray(all) ? all : [];
@@ -202,41 +210,34 @@ const Home = () => {
     }
   };
 
+  const fetchProductDetails = async (productName, localProductName) => {
+    try {
+      const encodedName = encodeURIComponent(productName);
+      const response = await fetch(`${API_BASE_URL}/premium-cashews?name=${encodedName}`);
+      const data = await response.json();
 
-const fetchProductDetails = async (productName, localProductName) => {
-  try {
-    const encodedName = encodeURIComponent(productName);
-    const response = await fetch(`${API_BASE_URL}/premium-cashews?name=${encodedName}`);
-    const data = await response.json();
-
-    if (data.success && data.data && data.data.length > 0) {
-      // Normalize: remove extra spaces, hyphens, lowercase — so
-      // "Whole White-180" (local) matches "Whole White- 180" (API)
-      const normalize = (s) => (s || "").toLowerCase().replace(/[\s-]+/g, "");
-
-      const target = normalize(localProductName);
-      const exactMatch = data.data.find(
-        (item) => normalize(item.name) === target
-      );
-
-      return exactMatch || data.data[0]; // fallback only if no exact match found
+      if (data.success && data.data && data.data.length > 0) {
+        const normalize = (s) => (s || "").toLowerCase().replace(/[\s-]+/g, "");
+        const target = normalize(localProductName);
+        const exactMatch = data.data.find(
+          (item) => normalize(item.name) === target
+        );
+        return exactMatch || data.data[0];
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      return null;
     }
-    return null;
-  } catch (error) {
-    console.error("Error fetching product details:", error);
-    return null;
-  }
-};
+  };
 
-  
   const handleBuyClick = async (product) => {
     setLoadingProductId(product.id);
-    
+
     try {
-      
       let apiProductName = "";
-      
-      switch(product.grade) {
+
+      switch (product.grade) {
         case "W180":
           apiProductName = "W180 Cashew Nuts - King of Cashews";
           break;
@@ -291,43 +292,40 @@ const fetchProductDetails = async (productName, localProductName) => {
 
       const apiProductData = await fetchProductDetails(apiProductName, product.name);
 
-
       const absoluteImage = product.image.startsWith("http")
         ? product.image
         : `${window.location.origin}${product.image}`;
 
-        const sizes = apiProductData
-  ? [{
-      size: apiProductData.size || "250g",
-      price: apiProductData.price,
-      mrp_price: apiProductData.mrp_price || null,
-    }]
-  : [{
-      size: "250g",
-      price: product.price,
-      mrp_price: null,
-    }];
+      const sizes = apiProductData
+        ? [{
+            size: apiProductData.size || "250g",
+            price: apiProductData.price,
+            mrp_price: apiProductData.mrp_price || null,
+          }]
+        : [{
+            size: "250g",
+            price: product.price,
+            mrp_price: null,
+          }];
 
-   const productData = {
-  id: product.id,
-  name: product.name,
-  price: apiProductData ? apiProductData.price : product.price, 
-  image: absoluteImage,
-  grade: product.grade,
-  description: product.description,
-  image_url: absoluteImage,
-  image_url1: absoluteImage,
-  sizes,
-  stock: 10,
-  pt: null
-};
+      const productData = {
+        id: product.id,
+        name: product.name,
+        price: apiProductData ? apiProductData.price : product.price,
+        image: absoluteImage,
+        grade: product.grade,
+        description: product.description,
+        image_url: absoluteImage,
+        image_url1: absoluteImage,
+        sizes,
+        stock: 10,
+        pt: null,
+      };
 
-
-
-navigate("/productdetails", { state: { product: productData } });
+      navigate("/productdetails", { state: { product: productData } });
     } catch (error) {
       console.error("Error in buy click:", error);
- 
+
       const absoluteImage = product.image.startsWith("http")
         ? product.image
         : `${window.location.origin}${product.image}`;
@@ -343,10 +341,10 @@ navigate("/productdetails", { state: { product: productData } });
         sizes: [{
           size: "250g",
           price: product.price,
-          mrp_price: null
+          mrp_price: null,
         }],
         stock: 10,
-        pt: null
+        pt: null,
       };
       navigate("/productdetails", { state: { product: productData } });
     } finally {
@@ -357,51 +355,33 @@ navigate("/productdetails", { state: { product: productData } });
   useEffect(() => {
     if (showGalleryModal ||
         showW180Details || showW210Details || showW240Details || showW320Details ||
-        showW450Details || wSplitDetails || cashewlwpDetails || spCashew || 
-        roastedDetails || saltedCashew || bormaCashew || greenChili || bbcashew || 
+        showW450Details || wSplitDetails || cashewlwpDetails || spCashew ||
+        roastedDetails || saltedCashew || bormaCashew || greenChili || bbcashew ||
         blockPepper || rawCashew || honeyCashew) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showGalleryModal, showW180Details, showW210Details, showW240Details, showW320Details, 
-      showW450Details, wSplitDetails, cashewlwpDetails, spCashew, 
-      roastedDetails, saltedCashew, bormaCashew, greenChili, bbcashew, 
+  }, [showGalleryModal, showW180Details, showW210Details, showW240Details, showW320Details,
+      showW450Details, wSplitDetails, cashewlwpDetails, spCashew,
+      roastedDetails, saltedCashew, bormaCashew, greenChili, bbcashew,
       blockPepper, rawCashew, honeyCashew]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.25 } },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
-
-  const imageLeftVariants = {
-    hidden: { opacity: 0, x: -80 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.7, ease: "easeOut" },
-    },
-  };
-
-  const imageRightVariants = {
-    hidden: { opacity: 0, x: 80 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.7, ease: "easeOut" },
+      transition: { duration: 0.4, ease: "easeOut" },
     },
   };
 
@@ -419,15 +399,15 @@ navigate("/productdetails", { state: { product: productData } });
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-       const res = await fetch(`${API_BASE_URL}/premium-cashews`);
+        const res = await fetch(`${API_BASE_URL}/premium-cashews`);
         const data = await res.json();
-console.log("API PRODUCTS 👉", data.data);
-
         if (data.success) {
           setApiProducts(data.data);
         }
       } catch (err) {
         console.log(err);
+      } finally {
+        setProductsLoading(false);
       }
     };
 
@@ -436,207 +416,77 @@ console.log("API PRODUCTS 👉", data.data);
 
   const testimonials = [
     {
-      quote:
-        "The best cashews I've ever tasted! Fresh, crunchy, and full of flavor.",
+      quote: "The best cashews I've ever tasted! Fresh, crunchy, and full of flavor.",
       name: "Priya K.",
     },
     {
-      quote:
-        "I can taste the difference in quality. These are truly premium snacks.",
+      quote: "I can taste the difference in quality. These are truly premium snacks.",
       name: "Rahul M.",
     },
   ];
 
   const products = [
-  {
-    id: 1,
-    name: "Whole White-180",
-   
-    price: 600,
-    image: W180,
-    grade: "W180",
-    description: "Premium large sized cashews with rich flavor",
-  },
-  {
-    id: 2,
-    name: "Whole White-210",
-  
-    price: "545",
-    image: W210,
-    grade: "W210",
-    description: "Excellent quality medium-large cashews",
-  },
-  {
-    id: 3,
-    name: "Whole White-240",
-
-    price: 499,
-    image: W240,
-    grade: "W240",
-    description: "Standard quality perfect for daily use",
-  },
-  {
-    id: 4,
-    name: "Whole White-320",
-
-    image: W320,
-    price: "290",
-    grade: "W320",
-    description: "Economical choice without compromising taste",
-  },
-  {
-    id: 5,
-    name: "Whole White-450",
-    
-    image: W450,
-    price: "245",
-    grade: "W450",
-    description: "Great for bulk cooking and processing",
-  },
-  {
-    id: 6,
-    name: "WSplit",
-
-    image: WSplit,
-    price: "475",
-    grade: "WSplit",
-    description: "Perfect for cooking and snacking",
-  },
-  {
-    id: 7,
-    name: "LWP",
-   
-    price: "375",
-    image: LWP,
-    grade: "LWP",
-    description: "Crunchy cashew splits ideal for sweets, snack mixes",
-  },
-  {
-    id: 8,
-    name: "SP",
-    
-    price: "190",
-    image: SP,
-    grade: "SP",
-    description: "Small Cashew Pieces–Easy use in baking",
-  },
-  {
-    id: 9,
-    name: "BB-Baby Bits",
-   
-    image: BB,
-    price: "110",
-    grade: "BB",
-    description: "Fresh cashew granules ideal for blended recipes",
-  },
-  {
-    id: 10,
-    name: "Roasted Cashew",
-  
-    price: "600",
-    grade: "Roasted",
-    image: Roasted,
-    description: "Golden roasted cashews with a rich",
-  },
-  {
-    id: 11,
-    name: "Salted Cashew",
-   
-    price: "650",
-    grade: "Salted",
-    image: saltedcashew,
-    description: "Crisp, buttery cashews lightly salted",
-  },
-  {
-    id: 12,
-    name: "Borma Cashew Skin",
-   
-    price: "780",
-    grade: "BormaC",
-    image: BormaCashewwithSkin,
-    description: "Rich, retaining their natural skin for extra flavor",
-  },
-  {
-    id: 13,
-    name: "Green Chili",
-   
-    price: "335",
-    grade: "GreenChiliC",
-    image: GreenChili,
-    description: "Green chili kick for a bold, spicy treat",
-  },
-  {
-    id: 14,
-    name: "Block Pepper Salted",
-
-    price: "250",
-    grade: "BlockPepper",
-    image: BlockPepperSalted,
-    description: "Crunchy cashews zesty black pepper",
-  },
-  {
-    id: 15,
-    name: "Raw Cashew in Skin",
-   
-    price: "275",
-    grade: "RawC",
-    image: RawSpicycashewwithskin,
-    description: "Naturally flavorful cashews with skin",
-  },
-  {
-    id: 16,
-    name: "Honey Roasted",
-
-    grade: "HoneyC",
-    price: "260",
-    image: honeyroasted,
-    description: "Crunchy cashews glazed golden honey for a sweet",
-  },
-];
+    { id: 1, name: "Whole White-180", price: 600, image: W180, grade: "W180", description: "Premium large sized cashews with rich flavor" },
+    { id: 2, name: "Whole White-210", price: "545", image: W210, grade: "W210", description: "Excellent quality medium-large cashews" },
+    { id: 3, name: "Whole White-240", price: 499, image: W240, grade: "W240", description: "Standard quality perfect for daily use" },
+    { id: 4, name: "Whole White-320", image: W320, price: "290", grade: "W320", description: "Economical choice without compromising taste" },
+    { id: 5, name: "Whole White-450", image: W450, price: "245", grade: "W450", description: "Great for bulk cooking and processing" },
+    { id: 6, name: "WSplit", image: WSplit, price: "475", grade: "WSplit", description: "Perfect for cooking and snacking" },
+    { id: 7, name: "LWP", price: "375", image: LWP, grade: "LWP", description: "Crunchy cashew splits ideal for sweets, snack mixes" },
+    { id: 8, name: "SP", price: "190", image: SP, grade: "SP", description: "Small Cashew Pieces–Easy use in baking" },
+    { id: 9, name: "BB-Baby Bits", image: BB, price: "110", grade: "BB", description: "Fresh cashew granules ideal for blended recipes" },
+    { id: 10, name: "Roasted Cashew", price: "600", grade: "Roasted", image: Roasted, description: "Golden roasted cashews with a rich" },
+    { id: 11, name: "Salted Cashew", price: "650", grade: "Salted", image: saltedcashew, description: "Crisp, buttery cashews lightly salted" },
+    { id: 12, name: "Borma Cashew Skin", price: "780", grade: "BormaC", image: BormaCashewwithSkin, description: "Rich, retaining their natural skin for extra flavor" },
+    { id: 13, name: "Green Chili", price: "335", grade: "GreenChiliC", image: GreenChili, description: "Green chili kick for a bold, spicy treat" },
+    { id: 14, name: "Block Pepper Salted", price: "250", grade: "BlockPepper", image: BlockPepperSalted, description: "Crunchy cashews zesty black pepper" },
+    { id: 15, name: "Raw Cashew in Skin", price: "275", grade: "RawC", image: RawSpicycashewwithskin, description: "Naturally flavorful cashews with skin" },
+    { id: 16, name: "Honey Roasted", grade: "HoneyC", price: "260", image: honeyroasted, description: "Crunchy cashews glazed golden honey for a sweet" },
+  ];
 
   return (
     <main className="bg-[#FAF9F6] overflow-x-hidden">
 
+      {/* HERO — renders immediately, image prioritized */}
       <div className="relative w-full h-[280px] sm:h-[400px] md:h-[700px] mt-0 overflow-hidden bg-[#FAF9F6]">
         <motion.img
           src={morecashew}
           alt="Cashew background"
           className="absolute inset-0 w-full h-full object-cover block"
-          initial={{ scale: 1.1 }}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          initial={{ scale: 1.05 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 3, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         />
 
-
-       <div className="relative h-full flex items-center">
-  <motion.div
-    className="text-left text-white px-4 sm:px-6 md:px-10 max-w-4xl"
-    initial={{ opacity: 0, y: 50 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 1, delay: 0.5 }}
-  >
-          
+        <div className="relative h-full flex items-center">
+          <motion.div
+            className="text-left text-white px-4 sm:px-6 md:px-10 max-w-4xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+          >
             <motion.div
               className="flex justify-center mt-8"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 1.5 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
             >
-              
             </motion.div>
           </motion.div>
         </div>
       </div>
 
-      {/* Elevate Every Celebration Section */}
+      {/* Elevate Every Celebration Section — renders immediately, no scroll-gate */}
       <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
         <div className="max-w-7xl mx-auto">
           <motion.h2
             className="text-lg sm:text-xl md:text-3xl font-bold text-[#2E8B57] text-left mb-8 md:mb-10"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
           >
             Elevate Every Celebration with Premium Dry Fruits
           </motion.h2>
@@ -647,13 +497,15 @@ console.log("API PRODUCTS 👉", data.data);
                 key={item.id}
                 className="flex-shrink-0 snap-start w-[62%] sm:w-[36%] group cursor-pointer"
                 whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => handleCollectionClick(item)}
               >
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-gray-200 bg-white">
                   <img
                     src={item.image}
                     alt={item.name}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {loadingCollectionId === item.id && (
@@ -666,10 +518,7 @@ console.log("API PRODUCTS 👉", data.data);
                   )}
                 </div>
                 <div className="mt-3 px-3 py-2 rounded-lg border border-gray-200 bg-white">
-                  <h3
-                    className="text-[#2C2C2C] text-xs sm:text-base md:text-lg font-bold truncate"
-                    title={item.name}
-                  >
+                  <h3 className="text-[#2C2C2C] text-xs sm:text-base md:text-lg font-bold truncate" title={item.name}>
                     {item.name}
                   </h3>
                 </div>
@@ -681,15 +530,14 @@ console.log("API PRODUCTS 👉", data.data);
 
       {/* <HomeLayout /> */}
 
-      {/* Discover Our Premium Cashew Collection Section */}
+      {/* Discover Our Premium Cashew Collection Section — renders immediately */}
       <section className="py-8 md:py-10 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
         <div className="max-w-7xl mx-auto">
           <motion.h2
             className="text-lg sm:text-3xl md:text-4xl font-bold text-[#2E8B57] text-left mb-10 md:mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
           >
             Discover Our Premium Cashew Collection
           </motion.h2>
@@ -699,14 +547,16 @@ console.log("API PRODUCTS 👉", data.data);
               <motion.div
                 key={product.id}
                 className="flex-shrink-0 snap-start w-[45%] sm:w-[32%] md:w-[24%] lg:w-[20%] xl:w-[15%] group cursor-pointer"
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.3 }}
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => handleBuyClick(product)}
               >
                 <div className="relative aspect-square rounded-2xl overflow-hidden shadow-md group-hover:shadow-xl border border-gray-100 bg-white transition-shadow duration-300">
                   <img
                     src={product.image}
                     alt={product.name}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
@@ -716,6 +566,15 @@ console.log("API PRODUCTS 👉", data.data);
               </motion.div>
             ))}
           </div>
+
+          {/* Skeletons for API-driven products, if/when rendered on the page */}
+          {productsLoading && (
+            <div className="flex gap-5 md:gap-7 overflow-x-auto pb-4 mt-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -723,7 +582,6 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 lg:h-[420px]">
-            {/* Featured image */}
             <div className="lg:w-[40%] h-[260px] sm:h-[360px] lg:h-full">
               {(() => {
                 const featured = celebrationGalleryImages.find(
@@ -741,6 +599,8 @@ console.log("API PRODUCTS 👉", data.data);
                     <img
                       src={featured.src}
                       alt={featured.alt}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     {loadingGalleryId === featured.id && (
@@ -756,7 +616,6 @@ console.log("API PRODUCTS 👉", data.data);
               })()}
             </div>
 
-            {/* Thumbnail grid */}
             <div className="lg:w-[70%] grid grid-cols-2 sm:grid-cols-5 lg:grid-rows-2 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 lg:h-full">
               {celebrationGalleryImages
                 .filter((img) => img.id !== featuredGalleryId)
@@ -776,6 +635,8 @@ console.log("API PRODUCTS 👉", data.data);
                     <img
                       src={img.src}
                       alt={img.alt}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     {loadingGalleryId === img.id && (
@@ -793,14 +654,14 @@ console.log("API PRODUCTS 👉", data.data);
         </div>
       </section>
 
-     
-      {/* From Farm to Table Section */}
+      {/* From Farm to Table Section — below the fold, scroll-reveal is fine here */}
       <section className="py-16 bg-[#F5F5F0]">
         <motion.h2
           className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-12 px-2"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
         >
           From Farm to Table
         </motion.h2>
@@ -814,10 +675,11 @@ console.log("API PRODUCTS 👉", data.data);
             <motion.div
               key={i}
               className="flex-1 p-6 text-center border-b-4 border-[#2E8B57]"
-              whileHover={{ scale: 1.04, backgroundColor: "#def7ec" }}
-              initial={{ opacity: 0, y: 25 * (i + 1) }}
+              whileHover={{ scale: 1.03, backgroundColor: "#def7ec" }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.05 }}
             >
               <div className="text-4xl mb-4">{step.icon}</div>
               <h3 className="text-xl font-bold mb-2">{step.title}</h3>
@@ -832,13 +694,14 @@ console.log("API PRODUCTS 👉", data.data);
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
             className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-10 md:mb-12"
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
           >
             Explore Our Collections
           </motion.h2>
-          
+
           <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-xl bg-gray-100">
             <AnimatePresence mode="wait">
               <motion.div
@@ -846,32 +709,32 @@ console.log("API PRODUCTS 👉", data.data);
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.5 }}
                 className="absolute inset-0"
               >
                 <img
                   src={sliderImages[sliderIndex].src}
                   alt={sliderImages[sliderIndex].alt}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </motion.div>
             </AnimatePresence>
 
-            {/* Gradient overlay with info */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 md:p-8">
               <motion.p
                 key={`text-${sliderIndex}`}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.5 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35 }}
                 className="text-white text-lg md:text-xl font-semibold"
               >
                 {sliderImages[sliderIndex].alt}
               </motion.p>
             </div>
 
-            {/* Indicator dots */}
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
               {sliderImages.map((_, index) => (
                 <motion.div
@@ -880,7 +743,7 @@ console.log("API PRODUCTS 👉", data.data);
                     scale: index === sliderIndex ? 1.2 : 1,
                     opacity: index === sliderIndex ? 1 : 0.5,
                   }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.25 }}
                   className={`h-2 rounded-full transition-colors ${
                     index === sliderIndex ? "bg-orange-500 w-8" : "bg-white w-2"
                   }`}
@@ -895,9 +758,10 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-16 bg-white">
         <motion.h2
           className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-12 px-2"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
         >
           What Our Customers Say
         </motion.h2>
@@ -905,6 +769,7 @@ console.log("API PRODUCTS 👉", data.data);
           className="max-w-4xl mx-auto"
           initial="hidden"
           whileInView="visible"
+          viewport={{ once: true }}
           variants={containerVariants}
         >
           {testimonials.map((testimonial, i) => (
@@ -912,11 +777,9 @@ console.log("API PRODUCTS 👉", data.data);
               key={i}
               className="bg-[#FAF9F6] p-8 rounded-xl shadow-md mb-6"
               variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
             >
-              <blockquote className="text-lg italic">
-                "{testimonial.quote}"
-              </blockquote>
+              <blockquote className="text-lg italic">"{testimonial.quote}"</blockquote>
               <footer className="mt-4 font-bold">— {testimonial.name}</footer>
             </motion.div>
           ))}
@@ -927,17 +790,16 @@ console.log("API PRODUCTS 👉", data.data);
       <section className="py-16 bg-gradient-to-br from-amber-100 to-emerald-200">
         <motion.div
           className="text-center max-w-3xl mx-auto px-4"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
         >
           <span className="inline-block px-4 py-1 bg-white rounded-full mb-4 font-bold shadow-sm">
             Limited Time
           </span>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4">Monsoon Harvest Special</h2>
-          <p className="text-lg mb-6">
-            Fresh batch just arrived from our Panruti farms
-          </p>
+          <p className="text-lg mb-6">Fresh batch just arrived from our Panruti farms</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -959,98 +821,58 @@ console.log("API PRODUCTS 👉", data.data);
         </motion.div>
       </section>
 
-      {/* Details Components (Modals) */}
+      {/* Details Components (Modals) — lazy-loaded, wrapped in Suspense */}
       <AnimatePresence>
-        {showW180Details && (
-          <W180Details
-            onClose={() => setShowW180Details(null)}
-            product={showW180Details}
-          />
-        )}
-        {showW210Details && (
-          <W210Details
-            onClose={() => setShowW210Details(null)}
-            product={showW210Details}
-          />
-        )}
-        {showW240Details && (
-          <W240Details
-            onClose={() => setShowW240Details(null)}
-            product={showW240Details}
-          />
-        )}
-        {showW320Details && (
-          <W320Details
-            onClose={() => setShowW320Details(null)}
-            product={showW320Details}
-          />
-        )}
-        {showW450Details && (
-          <W450Details
-            onClose={() => setShowW450Details(null)}
-            product={showW450Details}
-          />
-        )}
-        {wSplitDetails && (
-          <WSplitDetails
-            onClose={() => setWSplitDetails(null)}
-            product={wSplitDetails}
-          />
-        )}
-        {cashewlwpDetails && (
-          <LWPDetails
-            onClose={() => setLwpDetails(null)}
-            product={cashewlwpDetails}
-          />
-        )}
-        {bbcashew && (
-          <BBDetails onClose={() => setBbcashew(null)} product={bbcashew} />
-        )}
-        {spCashew && (
-          <SPDetails onClose={() => setSpcashew(null)} product={spCashew} />
-        )}
-        {roastedDetails && (
-          <RoastedCashew
-            onClose={() => setRoastedDetails(null)}
-            product={roastedDetails}
-          />
-        )}
-        {saltedCashew && (
-          <SaltedDetails
-            onClose={() => setSaltedCashew(null)}
-            product={saltedCashew}
-          />
-        )}
-        {bormaCashew && (
-          <BormaCashew
-            onClose={() => setBormaCashew(null)}
-            product={bormaCashew}
-          />
-        )}
-        {greenChili && (
-          <GreenChiliDetails
-            onClose={() => setGreenChili(null)}
-            product={greenChili}
-          />
-        )}
-        {blockPepper && (
-          <BlockPepperDetails
-            onClose={() => setBlockPepper(null)}
-            product={blockPepper}
-          />
-        )}
-        {rawCashew && (
-          <RawcashewDetails
-            onClose={() => setRawCashew(null)}
-            product={rawCashew}
-          />
-        )}
-        {honeyCashew && (
-          <HoneyCashewDetails
-            onClose={() => setHoneyCashew(null)}
-            product={honeyCashew}
-          />
-        )}
+        <Suspense fallback={null}>
+          {showW180Details && (
+            <W180Details onClose={() => setShowW180Details(null)} product={showW180Details} />
+          )}
+          {showW210Details && (
+            <W210Details onClose={() => setShowW210Details(null)} product={showW210Details} />
+          )}
+          {showW240Details && (
+            <W240Details onClose={() => setShowW240Details(null)} product={showW240Details} />
+          )}
+          {showW320Details && (
+            <W320Details onClose={() => setShowW320Details(null)} product={showW320Details} />
+          )}
+          {showW450Details && (
+            <W450Details onClose={() => setShowW450Details(null)} product={showW450Details} />
+          )}
+          {wSplitDetails && (
+            <WSplitDetails onClose={() => setWSplitDetails(null)} product={wSplitDetails} />
+          )}
+          {cashewlwpDetails && (
+            <LWPDetails onClose={() => setLwpDetails(null)} product={cashewlwpDetails} />
+          )}
+          {bbcashew && (
+            <BBDetails onClose={() => setBbcashew(null)} product={bbcashew} />
+          )}
+          {spCashew && (
+            <SPDetails onClose={() => setSpcashew(null)} product={spCashew} />
+          )}
+          {roastedDetails && (
+            <RoastedCashew onClose={() => setRoastedDetails(null)} product={roastedDetails} />
+          )}
+          {saltedCashew && (
+            <SaltedDetails onClose={() => setSaltedCashew(null)} product={saltedCashew} />
+          )}
+          {bormaCashew && (
+            <BormaCashew onClose={() => setBormaCashew(null)} product={bormaCashew} />
+          )}
+          {greenChili && (
+            <GreenChiliDetails onClose={() => setGreenChili(null)} product={greenChili} />
+          )}
+          {blockPepper && (
+            <BlockPepperDetails onClose={() => setBlockPepper(null)} product={blockPepper} />
+          )}
+          {rawCashew && (
+            <RawcashewDetails onClose={() => setRawCashew(null)} product={rawCashew} />
+          )}
+          {honeyCashew && (
+            <HoneyCashewDetails onClose={() => setHoneyCashew(null)} product={honeyCashew} />
+          )}
+        </Suspense>
 
         {/* Gallery Modal */}
         {showGalleryModal && selectedGalleryItem && (
@@ -1062,13 +884,13 @@ console.log("API PRODUCTS 👉", data.data);
             className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl overflow-hidden shadow-2xl"
             >
-              {/* Close button */}
               <button
                 onClick={() => setShowGalleryModal(false)}
                 className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white rounded-full p-2 transition-colors"
@@ -1078,7 +900,6 @@ console.log("API PRODUCTS 👉", data.data);
                 </svg>
               </button>
 
-              {/* Image */}
               <div className="w-full h-full flex items-center justify-center bg-gray-100">
                 <img
                   src={selectedGalleryItem.src}
@@ -1087,7 +908,6 @@ console.log("API PRODUCTS 👉", data.data);
                 />
               </div>
 
-              {/* Bottom action bar */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="text-white text-lg font-semibold">{selectedGalleryItem.alt}</h3>
