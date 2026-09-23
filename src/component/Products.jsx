@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaShoppingCart, FaStar, FaTimes } from "react-icons/fa";
+import { FaShoppingCart, FaStar, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { productApi, resolveImageUrl } from "../services/api";
@@ -25,11 +25,41 @@ const collectionBanners = [
   { id: "gift-hamper", name: "Gift Hamper", image: giftHamperImg },
 ];
 
+// Collect up to 5 uploaded images for a product, resolved and de-duplicated.
+// Supports either a `product.images` array (from admin panel) or discrete
+// image_url / image_url1..4 / image fields, whichever the backend provides.
+const getProductImages = (product) => {
+  const rawCandidates = [];
+
+  if (Array.isArray(product?.images)) {
+    rawCandidates.push(...product.images);
+  }
+
+  rawCandidates.push(
+    product?.image_url,
+    product?.image_url1,
+    product?.image_url2,
+    product?.image_url3,
+    product?.image_url4,
+    product?.image_url5,
+    product?.image
+  );
+
+  const resolved = rawCandidates
+    .filter(Boolean)
+    .map((img) => resolveImageUrl(img))
+    .filter(Boolean);
+
+  return [...new Set(resolved)].slice(0, 5);
+};
+
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [quantities, setQuantities] = useState({});
   const [selectedSizes, setSelectedSizes] = useState({});
-  const [zoomedImage, setZoomedImage] = useState(null);
+  // zoomedGallery: { images: string[], index: number } | null
+  const [zoomedGallery, setZoomedGallery] = useState(null);
+  const touchStartX = useRef(null);
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const sectionRef = useRef(null);
@@ -164,10 +194,59 @@ const Products = () => {
       ? products
       : products.filter((product) => product.category === selectedCategory);
 
-  const handleImageClick = (imageSrc) => setZoomedImage(imageSrc);
-  const closeZoomedImage = () => setZoomedImage(null);
+  // Open the gallery modal for a product, starting at the clicked image.
+  const handleImageClick = (product, clickedIndex = 0) => {
+    const images = getProductImages(product);
+    const gallery = images.length ? images : ["https://via.placeholder.com/300"];
+    const safeIndex = Math.min(Math.max(clickedIndex, 0), gallery.length - 1);
+    setZoomedGallery({ images: gallery, index: safeIndex });
+  };
 
+  const closeZoomedImage = () => setZoomedGallery(null);
 
+  const showPrevImage = useCallback(() => {
+    setZoomedGallery((prev) => {
+      if (!prev || prev.images.length <= 1) return prev;
+      const nextIndex = (prev.index - 1 + prev.images.length) % prev.images.length;
+      return { ...prev, index: nextIndex };
+    });
+  }, []);
+
+  const showNextImage = useCallback(() => {
+    setZoomedGallery((prev) => {
+      if (!prev || prev.images.length <= 1) return prev;
+      const nextIndex = (prev.index + 1) % prev.images.length;
+      return { ...prev, index: nextIndex };
+    });
+  }, []);
+
+  // Keyboard navigation: ArrowLeft / ArrowRight / Escape
+  useEffect(() => {
+    if (!zoomedGallery) return;
+    const onKeyDown = (e) => {
+      if (e.key === "ArrowLeft") showPrevImage();
+      else if (e.key === "ArrowRight") showNextImage();
+      else if (e.key === "Escape") closeZoomedImage();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [zoomedGallery, showPrevImage, showNextImage]);
+
+  // Swipe support for mobile
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const SWIPE_THRESHOLD = 50;
+    if (deltaX > SWIPE_THRESHOLD) {
+      showPrevImage();
+    } else if (deltaX < -SWIPE_THRESHOLD) {
+      showNextImage();
+    }
+    touchStartX.current = null;
+  };
 
   return (
     <>
@@ -219,35 +298,73 @@ const Products = () => {
         </motion.div>
       )}
 
+      {/* Image Gallery Modal */}
       <AnimatePresence>
-        {zoomedImage && (
+        {zoomedGallery && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             <motion.button
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
               onClick={closeZoomedImage}
-              className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300"
+              className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
+              aria-label="Close"
             >
               <FaTimes />
             </motion.button>
+
+            {zoomedGallery.images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    showPrevImage();
+                  }}
+                  className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 text-white text-2xl sm:text-3xl bg-black/40 hover:bg-black/60 rounded-full p-2 sm:p-3 z-10"
+                  aria-label="Previous image"
+                >
+                  <FaChevronLeft />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    showNextImage();
+                  }}
+                  className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 text-white text-2xl sm:text-3xl bg-black/40 hover:bg-black/60 rounded-full p-2 sm:p-3 z-10"
+                  aria-label="Next image"
+                >
+                  <FaChevronRight />
+                </button>
+              </>
+            )}
+
             <motion.div
+              key={zoomedGallery.index}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
+              transition={{ duration: 0.15 }}
               className="max-w-4xl w-full h-full flex items-center justify-center"
             >
               <img
-                src={zoomedImage}
+                src={zoomedGallery.images[zoomedGallery.index]}
                 alt="Zoomed Product"
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full object-contain select-none"
+                draggable={false}
               />
             </motion.div>
+
+            {zoomedGallery.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                {zoomedGallery.index + 1} / {zoomedGallery.images.length}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -365,11 +482,7 @@ const Products = () => {
                 className="relative h-36 md:h-44 lg:h-48 cursor-zoom-in overflow-hidden"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleImageClick(
-                    resolveImageUrl(
-                      product.image_url || product.image_url1 || product.image
-                    ) || "https://via.placeholder.com/300"
-                  );
+                  handleImageClick(product, 0);
                 }}
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
@@ -385,8 +498,8 @@ const Products = () => {
                 />
               </motion.div>
 
-              <div className="px-2 pt-1.5 md:px-3 md:pt-2 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-1">
+              <div className="px-2 pt-1 md:px-3 md:pt-1.5 pb-1.5 md:pb-2 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-0.5">
                   <h3 className="text-xs md:text-sm font-bold text-gray-900 truncate">
                     {product.name}
                   </h3>
@@ -400,11 +513,11 @@ const Products = () => {
                   </div>
                 </div>
 
-                <p className="text-gray-500 text-xs mb-1 md:mb-2 truncate">
+                <p className="text-gray-500 text-xs mb-0.5 md:mb-1 truncate">
                   {product.category}
                 </p>
 
-                <div className="mb-1 md:mb-2">
+                <div className="mb-0.5 md:mb-1">
                   <span className="text-sm md:text-base font-bold text-[#2E8B57]">
                     ₹{product.sizes?.[0]?.price || product.price}
                   </span>
@@ -420,7 +533,7 @@ const Products = () => {
                   )}
                 </div>
 
-                <div className="mt-auto pt-2 pb-2 md:pb-3 border-t border-gray-100">
+                <div className="mt-auto pt-1.5 pb-1.5 md:pb-2 border-t border-gray-100">
                   <div className="flex gap-2">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -503,11 +616,7 @@ const Products = () => {
                     className="relative h-36 md:h-44 lg:h-48 cursor-zoom-in overflow-hidden"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleImageClick(
-                        resolveImageUrl(
-                          product.image_url || product.image_url1 || product.image
-                        ) || "https://via.placeholder.com/300"
-                      );
+                      handleImageClick(product, 0);
                     }}
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.3 }}
@@ -523,21 +632,21 @@ const Products = () => {
                     />
                   </motion.div>
 
-                  <div className="px-2 pt-1.5 md:px-3 md:pt-2 flex flex-col flex-grow">
+                  <div className="px-2 pt-1 md:px-3 md:pt-1.5 pb-1.5 md:pb-2 flex flex-col flex-grow">
                     <h3 className="text-xs md:text-sm font-bold text-gray-900 truncate">
                       {product.name}
                     </h3>
-                    <p className="text-gray-500 text-xs mb-1 md:mb-2 truncate">
+                    <p className="text-gray-500 text-xs mb-0.5 md:mb-1 truncate">
                       {product.category}
                     </p>
 
-                    <div className="mb-1 md:mb-2">
+                    <div className="mb-0.5 md:mb-1">
                       <span className="text-sm md:text-base font-bold text-[#2E8B57]">
                         ₹{product.sizes?.[0]?.price || product.price}
                       </span>
                     </div>
 
-                    <div className="mt-auto pt-2 pb-2 md:pb-3 border-t border-gray-100">
+                    <div className="mt-auto pt-1.5 pb-1.5 md:pb-2 border-t border-gray-100">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
