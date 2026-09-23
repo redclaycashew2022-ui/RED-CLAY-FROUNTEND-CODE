@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { productApi, resolveImageUrl } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,6 +17,20 @@ import {
   FaUndo
 } from "react-icons/fa";
 
+// Deterministic pseudo-random number in [min, max], seeded by a string/id so
+// the same product always shows the same review count (no reshuffling on
+// every re-render), but different products show different counts.
+const seededRandomInRange = (seed, min, max) => {
+  const str = String(seed ?? "default");
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // 32-bit int
+  }
+  const normalized = Math.abs(hash % 1000) / 1000; // 0..1
+  return Math.floor(min + normalized * (max - min + 1));
+};
+
 const ProductDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,6 +47,14 @@ const ProductDetails = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const { isAuthenticated } = useAuth();
+
+  // Random-but-stable review count for this product (e.g. 35–320 reviews).
+  // Uses product.rating if present as a nice-to-have tie-breaker, otherwise
+  // just the product id/name so it stays the same across re-renders.
+  const reviewCount = useMemo(
+    () => seededRandomInRange(product?.id ?? product?.name, 35, 320),
+    [product?.id, product?.name]
+  );
 
   // Get all product images
   const productImages = [
@@ -185,7 +207,7 @@ const ProductDetails = () => {
         )}
       </AnimatePresence>
 
-      {/* Back Button - Mobile Optimized */}
+      {/* Back Button - Mobile only (sticky) */}
       <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100 lg:hidden">
         <button
           onClick={() => navigate(-1)}
@@ -202,7 +224,8 @@ const ProductDetails = () => {
         transition={{ duration: 0.3 }}
       className="max-w-7xl mx-auto bg-white px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 lg:pt-14 pb-6"
       >
-          <div className="w-full mb-4 px-1">
+          {/* Back Button - Desktop only, mirrors the sticky mobile one above */}
+          <div className="hidden lg:block w-full mb-4 px-1">
     <button
       onClick={() => navigate(-1)}
       className="flex items-center gap-2 text-gray-600 hover:text-[#2E8B57] transition-colors text-sm sm:text-base"
@@ -271,15 +294,7 @@ const ProductDetails = () => {
                 {product.name}
               </h1>
 
-              {/* Rating Section */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-500">(120 reviews)</span>
-              </div>
+              
 
               {/* Price Section - Mobile Optimized */}
               <motion.div
