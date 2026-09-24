@@ -112,7 +112,7 @@ const ProductDetails = () => {
       image: resolveImageUrl(product.image_url || product.image_url1) || product.image,
       price: currentPrice,
       totalPrice: totalPrice,
-      size: selectedSize?.size || product.size || "250g",
+      size: selectedSize?.pack_size || product.size || "250g",
       quantity: quantity,
       mrp_price: currentMRP,
       grade: product.grade
@@ -136,7 +136,7 @@ const ProductDetails = () => {
       name: product.name,
       image: resolveImageUrl(product.image_url || product.image_url1) || product.image,
       price: currentPrice,
-      size: selectedSize?.size || "250g",
+      size: selectedSize?.pack_size || "250g",
       quantity: quantity,
       totalPrice: totalPrice,
     };
@@ -344,19 +344,22 @@ const ProductDetails = () => {
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((size, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 rounded-lg border-2 transition-all ${
-                          selectedSize?.size === size.size
-                            ? "border-[#2E8B57] bg-[#2E8B57]/10 text-[#2E8B57]"
-                            : "border-gray-300 text-gray-700 hover:border-gray-400"
-                        }`}
-                      >
-                        <span className="font-medium">{size.size}</span>
-                        <span className="text-xs ml-1">₹{size.price}</span>
-                      </button>
-                    ))}
+  <button
+    key={idx}
+    onClick={() => setSelectedSize(size)}
+    className={`px-4 py-2 rounded-lg border-2 transition-all ${
+      selectedSize?.pack_size === size.pack_size
+        ? "border-[#2E8B57] bg-[#2E8B57]/10 text-[#2E8B57]"
+        : "border-gray-300 text-gray-700 hover:border-gray-400"
+    }`}
+  >
+    <span className="font-medium">{size.pack_size}</span>
+    <span className="text-xs ml-1">₹{size.price}</span>
+    {size.mrp_price && (
+      <span className="text-xs ml-1 line-through text-gray-400">₹{size.mrp_price}</span>
+    )}
+  </button>
+))}
                   </div>
                 </motion.div>
               )}
