@@ -7,7 +7,8 @@
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://red-clay-backend.onrender.com/api";
+  // "https://red-clay-backend.onrender.com/api";
+  "https://red-clay-backend-dev.onrender.com/api";
 
 // export const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
