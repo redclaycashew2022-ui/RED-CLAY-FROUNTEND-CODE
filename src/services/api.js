@@ -5,14 +5,21 @@
 
 
 
+<<<<<<< Updated upstream
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://red-clay-backend.onrender.com/api";
 
+=======
+>>>>>>> Stashed changes
 // export const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
-//   import.meta.env.VITE_REACT_APP_API_URL ||
-//   "http://localhost:5000/api";
+//   "https://red-clay-backend-dev.onrender.com/api";
+
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_REACT_APP_API_URL ||
+  "http://localhost:5000/api";
 
 
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");

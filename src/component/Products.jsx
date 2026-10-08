@@ -580,104 +580,8 @@ const Products = () => {
         </motion.div>
       </div>
 
-      {/* Related Products Section for Search Results */}
-      {fromSearch && filteredProducts.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mt-16 md:mt-20 bg-gradient-to-r from-[#2E8B57]/10 to-[#F0A374]/10 py-12 px-4 rounded-2xl"
-        >
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#2E8B57] mb-8 text-center">
-              ✨ You Might Also Like
-            </h2>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5"
-            >
-              {products.slice(0, 10).map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg md:rounded-xl overflow-hidden hover:shadow-xl transition-all flex flex-col h-full"
-                  style={{
-                    border: "none",
-                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                  }}
-                  onClick={() =>
-                    navigate("/productdetails", { state: { product } })
-                  }
-                >
-                  <motion.div
-                    className="relative h-36 md:h-44 lg:h-48 cursor-zoom-in overflow-hidden"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleImageClick(product, 0);
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <img
-                      src={
-                        resolveImageUrl(
-                          product.image_url || product.image_url1 || product.image
-                        ) || "https://via.placeholder.com/300"
-                      }
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </motion.div>
-
-                  <div className="px-2 pt-1 md:px-3 md:pt-1.5 pb-1.5 md:pb-2 flex flex-col flex-grow">
-                    <h3 className="text-xs md:text-sm font-bold text-gray-900 truncate">
-                      {product.name}
-                    </h3>
-                    <p className="text-gray-500 text-xs mb-0.5 md:mb-1 truncate">
-                      {product.category}
-                    </p>
-
-                    <div className="mb-0.5 md:mb-1">
-                      <span className="text-sm md:text-base font-bold text-[#2E8B57]">
-                        ₹{product.sizes?.[0]?.price || product.price}
-                      </span>
-                    </div>
-
-                    <div className="mt-auto pt-1.5 pb-1.5 md:pb-2 border-t border-gray-100">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const size =
-                            selectedSizes[product.id] || product.sizes?.[0];
-                          const quantity = quantities[product.id] || 1;
-                          addToCart({
-                            id: product.id,
-                            name: product.name,
-                            image: resolveImageUrl(
-                              product.image_url ||
-                                product.image_url1 ||
-                                product.image
-                            ),
-                            price: size?.price || product.price,
-                            size: size?.size || "",
-                            quantity: quantity,
-                          });
-                        }}
-                        className="w-full flex items-center justify-center bg-[#2E8B57] hover:bg-[#236B44] text-white py-1.5 px-2 rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200 text-xs md:text-sm"
-                      >
-                        <FaShoppingCart className="mr-1 md:mr-2" size={12} />
-                        <span>Add to Cart</span>
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+    
+          
             <div className="text-center mt-8">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -688,9 +592,10 @@ const Products = () => {
                 View All Products
               </motion.button>
             </div>
-          </div>
-        </motion.div>
-      )}
+
+
+    
+        
     </motion.div>
     </>
   );

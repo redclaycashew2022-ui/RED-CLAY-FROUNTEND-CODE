@@ -110,7 +110,7 @@ const productsList = [
   { id: 13, name: "Green Chili", grade: "GreenChiliC", category: "cashew" },
   { id: 14, name: "Block Pepper Salted", grade: "BlockPepper", category: "cashew" },
   { id: 15, name: "Raw Cashew in Skin", grade: "RawC", category: "raw cashew" },
-  { id: 16, name: "Honey Roasted", grade: "HoneyC", category: "honey cashew" },
+  // { id: 16, name: "Honey Roasted", grade: "HoneyC", category: "honey cashew" },
 ];
 
 const Navbar = () => {
