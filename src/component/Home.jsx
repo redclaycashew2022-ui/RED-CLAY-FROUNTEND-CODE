@@ -64,18 +64,129 @@ import post2 from "../images/post2.jpg";
 import post3 from "../images/post3.jpg";
 import post4 from "../images/post4.jpg";
 
+// Contact details used in the gallery "custom / bulk orders" CTA
+const GALLERY_WHATSAPP_NUMBER = "918754201900"; // country code + number, no + or spaces
+const GALLERY_PHONE_DISPLAY = "8754201900";
+const GALLERY_PHONE_LINK = "+918754201900";
+const GALLERY_EMAIL = "sivasivaranjani461@gmail.com";
+
+// Each gallery item now carries customer-facing info:
+//   name  -> product / collection name shown on the tile
+//   price -> price label (edit to your real prices)
+//   tag   -> small badge shown on the top-left of the tile
+//   desc  -> one-line description shown on the featured (big) tile
+// id, src, alt and filter are unchanged, so click / navigation behaviour is the same.
 const celebrationGalleryImages = [
-  { id: "hero", src: celebHero, alt: "Festive Dry Fruit Gifting", filter: { firstMainCategory: "Gifts", belowAll: true } },
-  { id: "hamper", src: celebHamper, alt: "Premium Gift Hamper", filter: { firstSubcategory: "Dry Fruit Gifting", belowAll: true } },
-  { id: "dryfruits", src: celebDryFruits, alt: "Assorted Dry Fruits", filter: { firstSubcategory: "Mixed Dry Fruits", belowMainCategories: ["Fruits"] } },
-  { id: "rawhoney", src: celebRawHoney, alt: "Raw Honey with Nuts", filter: { firstSubcategory: "Honey Mixed Nuts", belowMainCategories: ["HoneyDryFruits"] } },
-  { id: "twoconsmall", src: celebTwoConSmall, alt: "Premium Storage Jars", filter: { firstSubcategory: "2containersmall seeds", belowMainCategories: ["Seeds"] } },
-  { id: "fruitschoc", src: celebFruitsNutsChoc, alt: "Fruit & Nut Chocolate", filter: { belowMainCategories: ["HealthySnacks"] } },
-  { id: "mixed", src: celebMixed, alt: "Signature Mixed Dry Fruits", filter: { showAll: true } },
-  { id: "giftchat", src: celebGiftChat, alt: "Festive Jar Trio", filter: { belowMainCategories: ["Gifts"] } },
-  { id: "twowindowbox", src: celebTwoWindowBox, alt: "Window Gift Box", filter: { firstSubcategory: "2containerlong", belowMainCategories: ["Seeds"] } },
-  { id: "smallbox", src: celebSmallBox, alt: "Compact Nut Boxes", filter: { firstSubcategory: "smallbox4Window", belowMainCategories: ["Seeds", "Nuts"] } },
-  { id: "laddu", src: celebLaddu, alt: "Dry Fruit Laddus", filter: { firstSubcategory: "Dry Fruit Laddu", belowMainCategories: ["HealthySnacks"] } },
+  {
+    id: "hero",
+    src: celebHero,
+    alt: "Festive Dry Fruit Gifting",
+    name: "Festive Gifting Collection",
+    price: "From ₹999",
+    tag: "🎉 Festival Special",
+    desc: "Ready-made hampers for festivals, weddings & corporate gifting",
+    filter: { firstMainCategory: "Gifts", belowAll: true },
+  },
+  {
+    id: "hamper",
+    src: celebHamper,
+    alt: "Premium Gift Hamper",
+    name: "Premium Dry Fruit Hamper",
+    price: "From ₹799",
+    tag: "🎁 Gift Pack",
+    desc: "Handpicked nuts & dried fruits in a woven gift basket",
+    filter: { firstSubcategory: "Dry Fruit Gifting", belowAll: true },
+  },
+  {
+    id: "dryfruits",
+    src: celebDryFruits,
+    alt: "Assorted Dry Fruits",
+    name: "Assorted Dry Fruits",
+    price: "From ₹450",
+    tag: "🔥 Best Seller",
+    desc: "Almonds, cashews, pistachios, walnuts & more",
+    filter: { firstSubcategory: "Mixed Dry Fruits", belowMainCategories: ["Fruits"] },
+  },
+  {
+    id: "rawhoney",
+    src: celebRawHoney,
+    alt: "Raw Honey with Nuts",
+    name: "Raw Honey with Nuts",
+    price: "From ₹350",
+    tag: "🍯 Natural",
+    desc: "Pure raw honey infused with premium dry fruits",
+    filter: { firstSubcategory: "Honey Mixed Nuts", belowMainCategories: ["HoneyDryFruits"] },
+  },
+  {
+    id: "twoconsmall",
+    src: celebTwoConSmall,
+    alt: "Premium Storage Jars",
+    name: "Premium Seed Jars (Set of 2)",
+    price: "From ₹299",
+    tag: "🌱 Healthy",
+    desc: "Airtight jars filled with healthy seeds",
+    filter: { firstSubcategory: "2containersmall seeds", belowMainCategories: ["Seeds"] },
+  },
+  {
+    id: "fruitschoc",
+    src: celebFruitsNutsChoc,
+    alt: "Fruit & Nut Chocolate",
+    name: "Fruit & Nut Chocolate Box",
+    price: "From ₹399",
+    tag: "🆕 New",
+    desc: "Rich chocolate topped with dried fruits & nuts",
+    filter: { belowMainCategories: ["HealthySnacks"] },
+  },
+  {
+    id: "mixed",
+    src: celebMixed,
+    alt: "Signature Mixed Dry Fruits",
+    name: "Signature Mixed Dry Fruits",
+    price: "From ₹499",
+    tag: "🔥 Best Seller",
+    desc: "Our signature blend of premium dry fruits",
+    filter: { showAll: true },
+  },
+  {
+    id: "giftchat",
+    src: celebGiftChat,
+    alt: "Festive Jar Trio",
+    name: "Festive Jar Trio",
+    price: "From ₹899",
+    tag: "🎁 Gift Pack",
+    desc: "Three festive jars, beautifully wrapped",
+    filter: { belowMainCategories: ["Gifts"] },
+  },
+  {
+    id: "twowindowbox",
+    src: celebTwoWindowBox,
+    alt: "Window Gift Box",
+    name: "2-Jar Window Gift Box",
+    price: "From ₹549",
+    tag: "🎁 Gift Pack",
+    desc: "Two-compartment window box, perfect for gifting",
+    filter: { firstSubcategory: "2containerlong", belowMainCategories: ["Seeds"] },
+  },
+  {
+    id: "smallbox",
+    src: celebSmallBox,
+    alt: "Compact Nut Boxes",
+    name: "Compact Nut Boxes",
+    price: "From ₹249",
+    tag: "✨ Mini Pack",
+    desc: "Small boxes ideal for return gifts",
+    filter: { firstSubcategory: "smallbox4Window", belowMainCategories: ["Seeds", "Nuts"] },
+  },
+  {
+    id: "laddu",
+    src: celebLaddu,
+    alt: "Dry Fruit Laddus",
+    name: "Dry Fruit Laddu",
+    price: "From ₹299",
+    tag: "🍬 Sweet & Healthy",
+    desc: "No-sugar laddus made with dates, nuts & seeds",
+    filter: { firstSubcategory: "Dry Fruit Laddu", belowMainCategories: ["HealthySnacks"] },
+  },
 ];
 
 const celebrationCollection = [
@@ -93,6 +204,58 @@ const ProductCardSkeleton = () => (
     <div className="aspect-square rounded-2xl bg-gray-200 animate-pulse" />
     <div className="mt-3 h-4 w-3/4 mx-auto rounded bg-gray-200 animate-pulse" />
   </div>
+);
+
+// Badge + name/price caption drawn on top of a gallery image.
+// `large` = true is used for the big featured tile.
+const GalleryCaption = ({ item, large = false }) => (
+  <>
+    {item.tag && (
+      <span
+        className={`absolute top-2 left-2 z-10 bg-white/95 text-[#2C2C2C] font-semibold rounded-full shadow-sm ${
+          large ? "text-xs sm:text-sm px-3 py-1" : "text-[10px] sm:text-xs px-2 py-0.5"
+        }`}
+      >
+        {item.tag}
+      </span>
+    )}
+
+    <div
+      className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/85 via-black/50 to-transparent text-white ${
+        large ? "p-4 sm:p-5" : "p-2 sm:p-3 pt-8"
+      }`}
+    >
+      <h3
+        className={`font-bold leading-tight ${
+          large ? "text-lg sm:text-xl" : "text-xs sm:text-sm truncate"
+        }`}
+        title={item.name}
+      >
+        {item.name}
+      </h3>
+
+      {large && item.desc && (
+        <p className="text-xs sm:text-sm text-white/85 mt-1 line-clamp-2">{item.desc}</p>
+      )}
+
+      <div className="flex items-center justify-between mt-1">
+        <span
+          className={`text-amber-300 font-semibold ${
+            large ? "text-sm sm:text-base" : "text-[11px] sm:text-xs"
+          }`}
+        >
+          {item.price}
+        </span>
+        <span
+          className={`text-white/90 font-medium ${
+            large ? "text-xs sm:text-sm" : "text-[10px] sm:text-xs hidden sm:inline"
+          }`}
+        >
+          View →
+        </span>
+      </div>
+    </div>
+  </>
 );
 
 const Home = () => {
@@ -581,6 +744,16 @@ const Home = () => {
       {/* Celebrations Gallery Section */}
       <section className="py-8 md:py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
+          {/* Section title + subtitle so customers know what this gallery is */}
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-lg sm:text-3xl md:text-4xl font-bold text-[#2E8B57] text-left">
+              Gift Hampers &amp; Dry Fruit Collections
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-gray-600">
+              Ready-made hampers, jars &amp; sweets for festivals, weddings and corporate gifting. Tap any image to explore.
+            </p>
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 lg:h-[420px]">
             <div className="lg:w-[40%] h-[260px] sm:h-[360px] lg:h-full">
               {(() => {
@@ -603,6 +776,7 @@ const Home = () => {
                       decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
+                    <GalleryCaption item={featured} large />
                     {loadingGalleryId === featured.id && (
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -639,6 +813,7 @@ const Home = () => {
                       decoding="async"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
+                    <GalleryCaption item={img} />
                     {loadingGalleryId === img.id && (
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                         <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -649,6 +824,45 @@ const Home = () => {
                     )}
                   </motion.div>
                 ))}
+            </div>
+          </div>
+
+          {/* CTA for custom / bulk hampers */}
+          <div className="mt-8 md:mt-10 rounded-2xl bg-[#FAF9F6] border border-gray-200 px-5 py-5 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div className="text-center lg:text-left">
+              <p className="text-sm sm:text-base font-semibold text-[#2C2C2C]">
+                Need custom hampers or bulk / corporate orders?
+              </p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                Not on WhatsApp? Call or email us anytime.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <a
+                href={`https://wa.me/${GALLERY_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                  "Hi, I would like to know more about your gift hampers and dry fruit collections."
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#25D366] hover:bg-[#1ebe5b] text-white px-6 py-2.5 rounded-full font-semibold shadow-md transition-colors whitespace-nowrap"
+              >
+                Enquire on WhatsApp
+              </a>
+              <a
+                href={`tel:${GALLERY_PHONE_LINK}`}
+                className="border border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white px-5 py-2.5 rounded-full font-semibold transition-colors whitespace-nowrap"
+              >
+                📞 {GALLERY_PHONE_DISPLAY}
+              </a>
+              <a
+                href={`mailto:${GALLERY_EMAIL}?subject=${encodeURIComponent(
+                  "Enquiry: Custom / Bulk Hampers"
+                )}`}
+                className="border border-gray-300 text-[#2C2C2C] hover:bg-gray-100 px-5 py-2.5 rounded-full font-semibold transition-colors break-all sm:break-normal"
+              >
+                ✉️ {GALLERY_EMAIL}
+              </a>
             </div>
           </div>
         </div>
